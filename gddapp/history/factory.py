@@ -53,9 +53,9 @@ class GDDHistoryFileMethods:
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def historyGridDir(self, source, region):
-        sum_dir = os.path.join(self.projectGridDir(source, region), 'history')
-        if not os.path.exists(sum_dir): os.makedirs(sum_dir)
-        return sum_dir
+        hist_dir = os.path.join(self.projectGridDir(source, region), 'history')
+        if not os.path.exists(hist_dir): os.makedirs(hist_dir)
+        return hist_dir
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -68,9 +68,7 @@ class GDDHistoryFileMethods:
         template_args['region'] = self.regionToFilepath(region)
         template_args['source'] = self.sourceToFilepath(source)
         template_args['threshold'] = threshold_str
-        if year in (365,366): template_args['year'] = year
-        elif isLeapYear(year): template_args['year'] = 366
-        else: template_args['year'] = 365
+        template_args['year'] = year
         return template % template_args
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

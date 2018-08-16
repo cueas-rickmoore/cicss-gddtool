@@ -1,5 +1,5 @@
 
-(function(jQuery) {
+;(function(jQuery) {
 
 var isValidPropertyName = function(text) {
     var valid = /^[0-9a-zA-Z_]+$/;

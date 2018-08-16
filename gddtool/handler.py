@@ -24,15 +24,11 @@ class GDDToolRequestHandlerMethods:
     def extractSeasonDates(self, request_dict, year=None):
         if year is None:
             year = request_dict.get('season', None)
-            if year is None :
-                if self.mode_config is not None:
-                    year  = self.mode_config.dates.season
-                start_date = self.appDateFormat(datetime.date(year,
-                                            *self.tool.season_start_day))
-                end_date = self.appDateFormat(datetime.date(year,
-                                              *self.tool.season_end_day))
-                return { 'season_start':start_date, 'season_end':end_date,
-                         "season":year }
+            if year is None:
+                year  = self.mode_config.get('season', None)
+            if year is None : 
+                return { 'season': None, 'season_end': None,
+                         'season_start': None }
 
         if isinstance(year, basestring): year = int(year)
 

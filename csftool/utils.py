@@ -9,7 +9,7 @@ def validateResourceConfiguration(server_config):
     resource_dirpath = server_config.dirpaths.resources
     resources = { }
 
-    for name, config in server_config.resources.items():
+    for name, config in server_config.resource_map.items():
         handler_key, resource_type, path = config
 
         if isinstance(path, (tuple,list)):
@@ -22,6 +22,7 @@ def validateResourceConfiguration(server_config):
 
         if os.path.exists(path):
             resources[name] = (handler_key, resource_type, path)
+            print "    ", name, ":", resources[name]
         else:
             raise IOError, '%s does not exist : %s' % (resource_type, path)
 

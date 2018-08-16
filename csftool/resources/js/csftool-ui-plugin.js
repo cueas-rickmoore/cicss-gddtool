@@ -136,15 +136,20 @@ var DataSourceInterface = {
 
 var DateInterface = {
     anchor: "#csftool-chart-start-datepicker",
+    button_label: "Select date",
     callback: null,
     datepicker: '#ui-datepicker-div',
+    date_format: "yy-mm-dd",
+    initialized: false
+    max_date: null,
+    min_date: null,
+    start_date: null,
 
     execCallback: function(new_date) { if (this.callback) { var result = this.callback("startDateChanged", new_date); } },
     getDate: function() { return jQuery(this.anchor).datepicker("getDate"); },
 
     init: function(start_date) {
-        jQuery(this.anchor).datepicker({
-            //appendTo: "caftool-date-selector",
+        var options = {
             autoclose: true,
             beforeShow: function() {
                 jQuery(DateInterface.datepicker).hide();
@@ -153,9 +158,10 @@ var DateInterface = {
             },
 			buttonImage: InterfaceManager.resource_url + "/icons/calendar-24x24.png",
 			buttonImageOnly: true,
-			buttonText: "Select date",
-            dateFormat: "yy-mm-dd",
+			buttonText: this.button_label,
+            dateFormat: this.date_format,
             onSelect: function(date_text, inst) {
+                DateInterface.start_date = dateValueToDateObject(date_text);
                 DateInterface.execCallback(date_text);
                 jQuery(DateInterface.datepicker).hide();
             },
@@ -163,15 +169,28 @@ var DateInterface = {
             showButtonPanel: false,
 			showOn: "button",
             showOtherMonths: true,
-		});
+		}
+        if (this.max_date != null) { options['maxDate'] = this.max_date; }
+        if (this.min_date != null) { options['minDate'] = this.min_date; }
+
+        jQuery(this.anchor).datepicker(options);
+        this.initialized = true;
         jQuery(this.datepicker).hide();
-        if (typeof start_date !== 'undefined') {
-            jQuery(this.anchor).datepicker("setDate", dateValueToDateObject(start_date));
-        }
+
+        if (typeof start_date !== 'undefined') { this.setStartDate(start_date);
+        } else if (this.start_date != null) { this.setStartDate(this.start_date); }
+        } else { this.setStartDate(new Date().toISOString().split('T')[0]) }
     },
 
     setCallback: function (callback) { this.callback = callback; },
-    setStartDate: function(new_date) { jQuery(this.anchor).datepicker("setDate", dateValueToDateObject(new_date)); },
+    setDateRange: function(min_date, max_date) {
+        this.min_date = dateValueToDateObject(min_date);
+        this.max_date = dateValueToDateObject(max_date);
+    },
+    setStartDate: function(new_date) {
+        this.start_date = dateValueToDateObject(new_date);
+        if (this.initialized) { jQuery(this.anchor).datepicker("setDate",this.start_date); }
+    },
 }
 
 var LocationInterface = {
@@ -278,25 +297,11 @@ var InterfaceManager = {
 
     setCallback: function(request_type, callback) {
         switch(request_type) {
-            case "chartChangeRequest":
-                ChartTypeInterface.setCallback(callback);
-                break;
-
-            case "dataSourceChanged":
-                DataSourceInterface.setCallback(callback);
-                break;
-
-            case "locationChanged":
-                LocationInterface.setCallback("locationChanged", callback);
-                break;
-
-            case "locationChangeRequest":
-                LocationInterface.setCallback("locationChangeRequest", callback);
-                break;
-
-            case "startDateChanged":
-                DateInterface.setCallback(callback);
-                break;
+            case "chartChangeRequest": ChartTypeInterface.setCallback(callback); break;
+            case "dataSourceChanged": DataSourceInterface.setCallback(callback); break;
+            case "locationChanged": LocationInterface.setCallback("locationChanged", callback); break;
+            case "locationChangeRequest": LocationInterface.setCallback("locationChangeRequest", callback); break;
+            case "startDateChanged": DateInterface.setCallback(callback); break;
         }
     },
 
@@ -320,6 +325,10 @@ var jQueryInterfaceProxy = function() {
             case "data_source": // return current data source
             case "source": // return current data source
                 return DataSourceInterface.selectedSource();
+                break;
+
+            case "date_range": // return min and max dates for datepicker
+                return { min_date: DateInterface.min_date, max_date: DateInterface.max_date }
                 break;
 
             case "location": // return current location
@@ -348,34 +357,15 @@ var jQueryInterfaceProxy = function() {
                 });
                 break;
 
-            case "chart":
-                ChartTypeInterface.setChartType(arg_1)
-                break;
-
-            case "chart_types":
-                ChartTypeInterface.setChartTypes(arg_1);
-                break;
-
-            case "resource_url":
-                InterfaceManager.setResourceURL(arg_1);
-                break;
-
-            case "data_sources":
-            case "sources":
-                DataSourceInterface.mergeSources(arg_1);
-                break;
-
-            case "location":
-                LocationInterface.setLocation(arg_1);
-                break;
-
-            case "start_date":
-                DateInterface.setStartDate(arg_1);
-                break;
-
-            case "source_form_label":
-                DataSourceInterface.source_form_label = arg_1;
-                break;
+            case "chart": ChartTypeInterface.setChartType(arg_1) break;
+            case "chart_types": ChartTypeInterface.setChartTypes(arg_1); break;
+            case "resource_url": InterfaceManager.setResourceURL(arg_1); break;
+            case "data_sources": DataSourceInterface.mergeSources(arg_1); break;
+            case "date_range": DateInterface.setDateRange(arg_1) break;
+            case "location": LocationInterface.setLocation(arg_1); break;
+            case "start_date": DateInterface.setStartDate(arg_1); break;
+            case "sources": DataSourceInterface.mergeSources(arg_1); break;
+            case "source_form_label": DataSourceInterface.source_form_label = arg_1; break;
 
         } // end of 2 argument switch
 
@@ -385,18 +375,13 @@ var jQueryInterfaceProxy = function() {
         var arg_2 = arguments[2];
         switch(arg_0) {
 
-            case "bind":
-                InterfaceManager.setCallback(arg_1, arg_2);
-                break;
-
+            case "bind": InterfaceManager.setCallback(arg_1, arg_2); break;
+            case "date_range": DateInterface.setDateRange([arg_1, arg_2]); break;
             case "default":
-                if (arg_1 == "chart") {
-                    ChartTypeInterface.setDefault(arg_2);
-                } else if (arg_1 == "location") {
-                    LocationInterface.setDefault(arg_2);
-                } else if (arg_1 == "source") {
-                    DataSourceInterface.setDefaultSource(arg_2);
-                } break;
+                if (arg_1 == "chart") { ChartTypeInterface.setDefault(arg_2);
+                } else if (arg_1 == "location") { LocationInterface.setDefault(arg_2);
+                } else if (arg_1 == "source") { DataSourceInterface.setDefaultSource(arg_2); }
+                break;
         } // end of 3 argument switch
     }
     return undefined;

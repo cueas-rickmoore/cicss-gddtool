@@ -1,9 +1,14 @@
 
 ;(function(jQuery) {
 
-var dateValueToDateObject = function(date_value) {
-     if (date_value instanceof Date) { return date_value;
-     } else { return new Date(date_value+'T12:00:00-04:30'); }
+var adjustTimeZone = function(date_value) {
+    return new Date(date_value.toISOString().split('T')[0]+'T12:00:00-04:30');
+}
+
+var dateToDateObject = function(date_value) {
+    if (date_value instanceof Date) { return adjustTimeZone(date_value);
+    } else if (Array.isArray(date_value)) { return adjustTimeZone(new Date(date_value[0], date_value[1]-1, date_value[2]));
+    } else { return new Date(date_value+'T12:00:00-04:30'); }
 }
 
 var logObjectAttrs = function(obj) {
@@ -11,20 +16,29 @@ var logObjectAttrs = function(obj) {
 }
 
 var ChartTypeInterface = {
+    active: true,
     callback: null,
-    chart_types: { "trend":"Recent Trend", "season":"Season Outlook" },
+    chart_types: { "trend":"Recent Trend", "outlook":"Season Outlook" },
     default_chart: "trend",
 
-    chartType: function() { return jQuery("#gddtool-toggle-button").val(); },
+    chartType: function(chart_type) {
+        if (this.active) { return jQuery("#gddtool-toggle-button").val();
+        } else { return "season"; }
+    },
 
     execCallback: function(chart_type) {
         if (this.callback) { this.callback("chartChangeRequest", chart_type); }
     },
 
+    hideChartSelector: function() {
+        jQuery("#gddtool-toggle-display").hide();
+        jQuery("#gddtool-no-toggle-text").show();
+    },
+
     init: function() {
         var init_chart = this.default_chart;
         var next_chart;
-        if (init_chart == "trend" ) { next_chart = "season"; } else { next_chart = "trend"; }
+        if (init_chart == "trend" ) { next_chart = "outlook"; } else { next_chart = "trend"; }
         jQuery("#gddtool-toggle-button").addClass(init_chart);
         jQuery("#gddtool-toggle-button").button({ label: this.chart_types[next_chart] });
         jQuery("#gddtool-toggle-button").click( function() { ChartTypeInterface.toggleChart(); } );
@@ -34,19 +48,19 @@ var ChartTypeInterface = {
 
     setChartType: function(chart_type) {
         if (chart_type == "trend") {
-            if (jQuery("#gddtool-toggle-button").hasClass("season")) { 
-                jQuery("#gddtool-toggle-button").removeClass("season");
+            if (jQuery("#gddtool-toggle-button").hasClass("outlook")) { 
+                jQuery("#gddtool-toggle-button").removeClass("outlook");
             }
             jQuery("#gddtool-toggle-button").addClass("trend");
-            jQuery("#gddtool-toggle-button").button({ label: this.chart_types["season"] });
+            jQuery("#gddtool-toggle-button").button({ label: this.chart_types["outlook"] });
             this.execCallback("trend");
-        } else if (chart_type == "season") {
+        } else if (chart_type == "outlook") {
             if (jQuery("#gddtool-toggle-button").hasClass("trend")) { 
                 jQuery("#gddtool-toggle-button").removeClass("trend");
             }
-            jQuery("#gddtool-toggle-button").addClass("season");
+            jQuery("#gddtool-toggle-button").addClass("outlook");
             jQuery("#gddtool-toggle-button").button({ label: this.chart_types["trend"] });
-            this.execCallback("season");
+            this.execCallback("outlook");
         }
     },
 
@@ -54,18 +68,114 @@ var ChartTypeInterface = {
 
     setDefault: function(chart_type) { this.default_chart = chart_type; },
 
+    showChartSelector: function() {
+        jQuery("#gddtool-toggle-display").show();
+        jQuery("#gddtool-no-toggle-text").hide();
+    },
+
     toggleChart: function() {
         if (jQuery("#gddtool-toggle-button").hasClass("trend")) {
             jQuery("#gddtool-toggle-button").removeClass("trend");
-            jQuery("#gddtool-toggle-button").addClass("season");
+            jQuery("#gddtool-toggle-button").addClass("outlook");
             jQuery("#gddtool-toggle-button").button({ label: this.chart_types["trend"] });
-            this.execCallback("season");
-        } else if (jQuery("#gddtool-toggle-button").hasClass("season")) {
-            jQuery("#gddtool-toggle-button").removeClass("season");
+            this.execCallback("outlook");
+        } else if (jQuery("#gddtool-toggle-button").hasClass("outlook")) {
+            jQuery("#gddtool-toggle-button").removeClass("outlook");
             jQuery("#gddtool-toggle-button").addClass("trend");
-            jQuery("#gddtool-toggle-button").button({ label: this.chart_types["season"] });
+            jQuery("#gddtool-toggle-button").button({ label: this.chart_types["outlook"] });
             this.execCallback("trend");
         }
+    },
+}
+
+var DateInterface = {
+    anchor: "#gddtool-datepicker",
+    callbacks: { },
+    datepicker: '#ui-datepicker-div',
+    date_format: "yy-mm-dd",
+    initialized: false,
+    max_date: null,
+    min_date: null,
+    show_months: true,
+    show_years: false,
+    start_date: null,
+    year_range: null,
+
+    execCallback: function(ev, data) {
+        var callback = this.callbacks[ev]
+        if (!(typeof callback === 'undefined')) { var result = callback(ev, data); }
+    },
+    getDate: function() { return jQuery(this.anchor).datepicker("getDate"); },
+
+    init: function(initial_date) {
+        var options = {
+            //appendTo: "caftool-date-selector",
+            autoclose: true,
+            beforeShow: function() {
+                jQuery(DateInterface.datepicker).hide();
+                jQuery("#gddtool-date-selector").append(jQuery(DateInterface.datepicker));
+                //jQuery('#ui-datepicker-div').maxZIndex();
+            },
+			buttonImage: InterfaceManager.csftool_url + "/icons/calendar-24x24.png",
+			buttonImageOnly: true,
+			buttonText: this.button_label,
+            changeMonth: this.month_menu,
+            changeYear: this.year_menu,
+            dateFormat: this.date_format,
+			gotoCurrent: true,
+            onChangeMonthYear: function(year, month, datepicker) {
+                console.log("datepicker.onChangeMonthYear : " + DateInterface.start_date.getFullYear() + " : " + year);
+            },
+            onSelect: function(date_text, datepicker) {
+                DateInterface.start_date = dateToDateObject(date_text);
+                DateInterface.execCallback('plantDateChanged', date_text);
+                jQuery("#ui-datepicker-div").hide();
+            },
+            showAnim: "clip",
+            showButtonPanel: false,
+			showOn: "button",
+            showOtherMonths: true,
+		}
+        if (this.max_date != null && this.min_date != null) { 
+            options['maxDate'] = this.max_date;
+            options['minDate'] = this.min_date;
+        }
+        if (this.year_range != null) { 
+            options.changeYear = true;
+            options['yearRange'] = this.year_range;
+        }
+
+        jQuery(this.anchor).datepicker(options);
+        this.initialized = true;
+        jQuery(this.datepicker).hide();
+        jQuery("#gddtool-datepicker").change(function () { DateInterface.execCallback("plantDateChanged", this.value); });
+        jQuery("#ui-datepicker-div .ui-datepicker-header .ui-datepicker-title .ui-datepicker-year").change(
+               function () { console.log("#ui-datepicker-year.change :: " + this.value);
+                             //DateInterface.execCallback("yearChanged", this.value);
+        });
+    
+        if (typeof initial_date !== 'undefined') { this.setStartDate(initial_date);
+        } else if (this.start_date != null) { this.setStartDate(this.start_date);
+        } else { this.setStartDate(new Date().toISOString().split('T')[0]) }
+    },
+
+    setCallback: function (ev, callback) { this.callbacks[ev] = callback; },
+
+    setDateRange: function(min_date, max_date) {
+        this.min_date = dateToDateObject(min_date);
+        this.max_date = dateToDateObject(max_date);
+    },
+
+    setStartDate: function(new_date) {
+        this.start_date = dateToDateObject(new_date);
+        this.current_year = this.start_date.getFullYear();
+        if (this.initialized) { jQuery(this.anchor).datepicker("setDate", this.start_date); }
+    },
+
+    setYearRange: function(min_year, max_year) {
+        this.min_year = min_year;
+        this.max_year = max_year;
+        this.year_range = min_year.toString() + ":" + max_year.toString();
     },
 }
 
@@ -145,6 +255,8 @@ var LocationInterface = {
     setDefault: function(loc_obj) { this.default = jQuery.extend({}, loc_obj); },
 
     setLocation: function(loc_obj) {
+        logObjectAttrs(loc_obj);
+
         var span = '<span class="gddtool-location-address">{{ address }}</span>'
         var changed = false;
 
@@ -170,51 +282,6 @@ var LocationInterface = {
             // location key was changed but not location data
             this.current = jQuery.extend({}, loc_obj);
         }
-    },
-}
-
-var PlantDateInterface = {
-    anchor: "#gddtool-datepicker",
-    callback: null,
-    datepicker: '#ui-datepicker-div',
-
-    execCallback: function(new_date) {
-        if (this.callback) { var result = this.callback("plantDateChanged", new_date); }
-    },
-
-    init: function(initial_date) {
-        jQuery(this.anchor).datepicker({
-            //appendTo: "caftool-date-selector",
-            autoclose: true,
-            beforeShow: function() {
-                jQuery(PlantDateInterface.datepicker).hide();
-                jQuery("#gddtool-date-selector").append(jQuery(PlantDateInterface.datepicker));
-                //jQuery('#ui-datepicker-div').maxZIndex();
-            },
-			buttonImage: InterfaceManager.csftool_url + "/icons/calendar-24x24.png",
-			buttonImageOnly: true,
-			buttonText: "Select date",
-            dateFormat: "yy-mm-dd",
-            onSelect: function(date_text, inst) {
-                PlantDateInterface.execCallback(date_text);
-                jQuery("#ui-datepicker-div").hide();
-            },
-            showAnim: "clip",
-            showButtonPanel: false,
-			showOn: "button",
-            showOtherMonths: true,
-		});
-        jQuery(this.datepicker).hide();
-        if (typeof initial_date !== 'undefined') {
-            jQuery(this.anchor).datepicker("setDate", dateValueToDateObject(initial_date));
-        }
-    },
-
-    plantDate: function() { return jQuery(this.anchor).datepicker("getDate"); },
-    setCallback: function (callback) { this.callback = callback; },
-
-    setDate: function(new_date) {
-        jQuery(this.anchor).datepicker("setDate", dateValueToDateObject(new_date));
     },
 }
 
@@ -253,43 +320,24 @@ var InterfaceManager = {
         //document.getElementById('csftool-input').innerHTML = this.dom;
         dom_element.innerHTML = this.dom;
         LocationInterface.init();
-        PlantDateInterface.init(this.initial_date);
+        DateInterface.init(this.initial_date);
         GddThresholdInterface.init();
         ChartTypeInterface.init();
     },
 
     setCallback: function(request_type, callback) {
         switch(request_type) {
-            case "chartChangeRequest":
-                ChartTypeInterface.setCallback(callback);
-                break;
-
-            case "gddThresholdChanged":
-                GddThresholdInterface.setCallback(callback);
-                break;
-
-            case "locationChanged":
-                LocationInterface.setCallback("locationChanged", callback);
-                break;
-
-            case "locationChangeRequest":
-                LocationInterface.setCallback("locationChangeRequest", callback);
-                break;
-
-            case "plantDateChanged":
-                PlantDateInterface.setCallback(callback);
-                break;
+            case "chartChangeRequest": ChartTypeInterface.setCallback(callback); break;
+            case "gddThresholdChanged": GddThresholdInterface.setCallback(callback); break;
+            case "locationChanged": LocationInterface.setCallback("locationChanged", callback); break;
+            case "locationChangeRequest": LocationInterface.setCallback("locationChangeRequest", callback); break;
+            case "plantDateChanged": DateInterface.setCallback('plantDateChanged', callback); break;
+            case "yearChanged": DateInterface.setCallback('yearChanged', callback); break;
         }
     },
 
-    setInitialDate: function(initial_date) {
-        this.initial_date = dateValueToDateObject(initial_date);
-    },
-
-    setURL: function(tool, url) {
-        if (tool == "csftool") { this.csftool_url = url;
-        } else if (tool == "gddtool") { this.gddtool_url = url; }
-    },
+    setInitialDate: function(initial_date) { this.initial_date = dateToDateObject(initial_date); },
+    setURL: function(tool, url) { if (tool == "csftool") { this.csftool_url = url; } else if (tool == "gddtool") { this.gddtool_url = url; } },
 }
 
 var jQueryInterfaceProxy = function() {
@@ -301,8 +349,16 @@ var jQueryInterfaceProxy = function() {
                 return ChartTypeInterface.chartType();
                 break;
 
+            case "date_range": // return min and max dates for datepicker
+                return { min_date: DateInterface.min_date, max_date: DateInterface.max_date }
+                break;
+
             case "gdd_threshold": // return current GDD threhsold
                 return GddThresholdInterface.threshold();
+                break;
+
+            case "hide_chart_selector": 
+                return ChartTypeInterface.hideChartSelector();
                 break;
 
             case "location": // return current location
@@ -310,7 +366,11 @@ var jQueryInterfaceProxy = function() {
                 break;
 
             case "plant_date": // return current plant date
-                return PlantDateInterface.plantDate();
+                return DateInterface.getDate();
+                break;
+
+            case "show_chart_selector": 
+                return ChartTypeInterface.showChartSelector();
                 break;
 
         } // end of single argument switch
@@ -327,30 +387,15 @@ var jQueryInterfaceProxy = function() {
                 });
                 break;
 
-            case "chart":
-                ChartTypeInterface.setChartType(arg_1)
-                break;
-
-            case "charts":
-                ChartTypeInterface.setChartTypes(arg_1);
-                break;
-
-            case "csftool":
-            case "gddtool":
-                InterfaceManager.setURL(arg_0, arg_1);
-                break;
-
-            case "initial_date":
-                InterfaceManager.setInitialDate(arg_1);
-                break;
-
-            case "location":
-                LocationInterface.setLocation(arg_1);
-                break;
-
-            case "plant_date":
-                PlantDateInterface.setDate(arg_1);
-                break;
+            case "chart": ChartTypeInterface.setChartType(arg_1); break;
+            case "chart_types": ChartTypeInterface.setChartTypes(arg_1); break;
+            case "csftool": InterfaceManager.setURL(arg_0, arg_1); break;
+            case "date_range": DateInterface.setDateRange(arg_1[0], arg_1[1]); break;
+            case "gddtool": InterfaceManager.setURL(arg_0, arg_1); break;
+            case "initial_date": InterfaceManager.setInitialDate(arg_1); break;
+            case "location": LocationInterface.setLocation(arg_1); break;
+            case "plant_date": DateInterface.setStartDate(arg_1); break;
+            case "year_range": DateInterface.setYearRange(arg_1[0], arg_1[1]); break;
         } // end of 2 argument switch
 
     } else if (arguments.length == 3) {
@@ -359,15 +404,12 @@ var jQueryInterfaceProxy = function() {
         var arg_2 = arguments[2];
         switch(arg_0) {
 
-            case "bind":
-                InterfaceManager.setCallback(arg_1, arg_2);
-                break;
-
+            case "bind": InterfaceManager.setCallback(arg_1, arg_2); break;
+            case "date_range": DateInterface.setDateRange([arg_1, arg_2]); break;
+            case "year_range": DateInterface.setYearRange(arg_1, arg_2); break;
             case "default":
-                if (arg_1 == "chart") {
-                    ChartTypeInterface.setDefault(arg_2);
-                } else if (arg_1 == "location") {
-                    LocationInterface.setDefault(arg_2);
+                if (arg_1 == "chart") { ChartTypeInterface.setDefault(arg_2);
+                } else if (arg_1 == "location") { LocationInterface.setDefault(arg_2);
                 } break;
         } // end of 3 argument switch
     }
@@ -383,6 +425,7 @@ jQuery.fn.GddToolUserInterface = function(options) {
         });
     }
     InterfaceManager.init(dom_element);
+    console.log("EVENT :: GddToolUserInterface plugin ready");
     return jQueryInterfaceProxy;
 }
 

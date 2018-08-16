@@ -2,6 +2,7 @@
 import os,sys
 from copy import deepcopy
 import datetime
+from dateutil.relativedelta import relativedelta
 
 import tornado.template
 
@@ -26,7 +27,7 @@ class GDDToolBlockingTemplateHandler(GDDToolBlockingRequestHandler):
     def __call__(self, request):
         if self.debug:
             print '\nGDDToolBlockingTemplateHandler'
-            print "processing request for", request.uri
+            print "    processing request for", request.uri
 
         resource_path = self.getResourcePath(request.uri)
         if self.debug: print 'resource path', resource_path
@@ -44,11 +45,13 @@ class GDDToolBlockingTemplateHandler(GDDToolBlockingRequestHandler):
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def extractTemplateParameters(self, request_dict):
-        params = { 'server_url':self.server_config.server_url,
+        server_url = self.server_config.server_url
+        params = { 'server_url':server_url,
                    'tool_url':self.server_config.gddtool_url,
                  }
         if 'csftool_url' in self.server_config:
             params['csftool_url'] = self.server_config.csftool_url
+        else: params['csftool_url'] = "%s/csftool"  % server_url
         return params
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -62,8 +65,6 @@ GDDTOOL_FILE_HANDLERS['/test-gddtool.html'] = GDDToolBlockingTemplateHandler
 GDDTOOL_FILE_HANDLERS['/wpdev-gddtool.html'] = GDDToolBlockingTemplateHandler
 GDDTOOL_FILE_HANDLERS['load-dependencies.js'] = GDDToolBlockingTemplateHandler
 GDDTOOL_FILE_HANDLERS['/load-dependencies.js'] = GDDToolBlockingTemplateHandler
-GDDTOOL_FILE_HANDLERS['dev-load-dependencies.js'] = GDDToolBlockingTemplateHandler
-GDDTOOL_FILE_HANDLERS['/dev-load-dependencies.js'] = GDDToolBlockingTemplateHandler
 GDDTOOL_FILE_HANDLERS['test-load-dependencies.js'] = GDDToolBlockingTemplateHandler
 GDDTOOL_FILE_HANDLERS['/test-load-dependencies.js'] = GDDToolBlockingTemplateHandler
 GDDTOOL_FILE_HANDLERS['toolinit.js'] = GDDToolBlockingTemplateHandler
@@ -81,17 +82,28 @@ class GDDToolBlockingInitHandler(GDDToolBlockingTemplateHandler):
     def extractTemplateParameters(self, request_dict):
         # start with dates of current season 
         parameter_dict = self.extractSeasonParameters(request_dict)
+        parameter_dict['season_start_day'] = list(self.tool.season_start_day)
+        parameter_dict['season_end_day'] = list(self.tool.season_end_day)
+        year = parameter_dict['season']
+        if year is not None: year = int(year)
+        else: year = datetime.date.today().year
+        parameter_dict['season'] = year
 
         urls = GDDToolBlockingTemplateHandler.extractTemplateParameters(self,
                                               request_dict)
         parameter_dict.update(urls)
 
         # add plant date
-        plant_date = request_dict.get('plant_date', None)
-        if plant_date is None:
-            year = int(parameter_dict['season'])
-            plant_date = datetime.date(year, *self.tool.default_plant_day)
-        parameter_dict['plant_date'] = plant_date
+        parameter_dict['default_plant_day'] = list(self.tool.default_plant_day)
+        #plant_date = request_dict.get('plant_date', None)
+        #if plant_date is None:
+        #    plant_date = datetime.date(year, *self.tool.default_plant_day)
+        #if plant_date < season_start: plant_date = season_start
+        #parameter_dict['plant_date'] = plant_date
+
+        # check for multiple years ... always a sequence
+        parameter_dict['min_year'] = self.tool.first_year
+        parameter_dict['max_year'] = datetime.date.today().year
 
         # add GDD threshold
         parameter_dict['gdd_threshold'] = \
@@ -119,8 +131,6 @@ class GDDToolBlockingInitHandler(GDDToolBlockingTemplateHandler):
 GDDTOOL_FILE_HANDLERS['tool'] = GDDToolBlockingInitHandler
 GDDTOOL_FILE_HANDLERS['tool.js'] = GDDToolBlockingInitHandler
 GDDTOOL_FILE_HANDLERS['/tool.js'] = GDDToolBlockingInitHandler
-GDDTOOL_FILE_HANDLERS['dev-tool.js'] = GDDToolBlockingInitHandler
-GDDTOOL_FILE_HANDLERS['/dev-tool.js'] = GDDToolBlockingInitHandler
 GDDTOOL_FILE_HANDLERS['test-tool.js'] = GDDToolBlockingInitHandler
 GDDTOOL_FILE_HANDLERS['/test-tool.js'] = GDDToolBlockingInitHandler
 

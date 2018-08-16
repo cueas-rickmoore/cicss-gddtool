@@ -45,53 +45,53 @@ CONFIG.build.dirpaths = { 'tooldata':'/Volumes/data/app_data/gddtool',
                           'working' :'/Volumes/data/app_data'
                         }
 
-
 CONFIG.prod = ConfigObject('prod', CONFIG)
-CONFIG.prod.dirpaths = { 'tooldata' :'/home/web/nrcc_data/cicca/gddtool/app_data/gddtool',
-                         'project'  :'/home/web/nrcc_data/cicca/gddtool/app_data/gdd',
-                         'shared'   :'/home/web/nrcc_data/cicca/gddtool/app_data/shared',
-                         'static'   :'/home/web/nrcc_data/cicca/gddtool/app_data/shared/static',
-                         'working'  :'/home/web/nrcc_data/cicca/gddtool/app_data',
+CONFIG.prod.dirpaths = { 'project'  :'/app_data/gdd',
+                         'resources':'/opt/tool_pkg/gddtool/resources',
+                         'shared'   :'/app_data/shared',
+                         'static'   :'/app_data/shared/static',
+                         'tooldata' :'/app_data/gddtool',
+                         'working'  :'/app_data',
                        }
 CONFIG.prod.gddtool_url = 'http://tools.climatesmartfarming.org/gddtool'
 CONFIG.prod.server_address = 'http://tools.climatesmartfarming.org'
 CONFIG.prod.server_port = 20004
 CONFIG.prod.server_url = 'http://tools.climatesmartfarming.org'
 
-CONFIG.demo = CONFIG.prod.copy("demo")
+CONFIG.demo = ConfigObject('demo', CONFIG)
 CONFIG.demo.dates = { 'fcast_end':'2015-07-10',
                       'fcast_start':'2015-07-05',
                       'last_obs':'2015-07-04',
                       'last_valid':'2015-07-10',
                       'plant_date':'2015-05-01',
-                      'season':2015,
                     }
+CONFIG.season = 2015
 
 CONFIG.dev = ConfigObject('dev', CONFIG)
-CONFIG.dev.dates = CONFIG.demo.dates.copy("dates")
-CONFIG.dev.dirpaths = { 'tooldata':'/Volumes/Transport/data/app_data/gddtool',
-                        'project' :'/Volumes/Transport/data/app_data/gdd',
-                        'shared'  :'/Volumes/Transport/data/app_data/shared',
-                        'static'  :'/Volumes/Transport/data/app_data/shared/grid/static',
-                        'working' :'/Volumes/Transport/data/app_data'
+CONFIG.dev.dirpaths = { 'project'  :'/Volumes/Transport/data/app_data/gdd',
+                        'resources':'/Volumes/Transport/venvs/gddtool/gddtool_pkg/gddtool/dev-resources',
+                        'shared'   :'/Volumes/Transport/data/app_data/shared',
+                        'static'   :'/Volumes/Transport/data/app_data/shared/grid/static',
+                        'tooldata' :'/Volumes/Transport/data/app_data/gddtool',
+                        'working'  :'/Volumes/Transport/data/app_data'
                       }
-CONFIG.dev.home = 'dev-gddtool.html'
-CONFIG.dev.csftool_url = \
-'file://localhost/Volumes/Transport/venvs/csftool/csftool_pkg/csftool/resources'
-CONFIG.dev.gddtool_url = \
-'file://localhost/Volumes/Transport/venvs/gddtool/gddtool_pkg/gddtool/resources'
+CONFIG.dev.home = 'gddtool.html'
+CONFIG.dev.csftool_url = 'http://localhost:8082/csftool'
+CONFIG.dev.gddtool_url = 'http://localhost:8082/gddtool'
 CONFIG.dev.server_address = 'file://localhost'
 CONFIG.dev.server_port = 8082
-CONFIG.dev.server_url = \
-'file://localhost/Volumes/Transport/venvs/gddtool/gddtool_pkg/gddtool/resources'
+CONFIG.dev.server_url = 'http://localhost:8082'
 
 CONFIG.test = ConfigObject('test', CONFIG)
-CONFIG.test.dates = CONFIG.dev.copy("test")
+CONFIG.test.dirpaths = CONFIG.dev.dirpaths.copy("dirpaths")
+CONFIG.test.dirpaths.resources = '/Volumes/Transport/venvs/gddtool/gddtool_pkg/gddtool/resources'
+CONFIG.test.csftool_url = 'http://cyclone.nrcc.cornell.edu:8082/csftool'
+CONFIG.test.gddtool_url = 'http://cyclone.nrcc.cornell.edu:8082/gddtool'
 CONFIG.test.home = 'test-gddtool.html'
 CONFIG.test.server_address = 'http://cyclone.nrcc.cornell.edu'
 CONFIG.test.server_url = 'http://cyclone.nrcc.cornell.edu:8082'
 
-CONFIG.wpdev = CONFIG.dev.copy("wpdev")
+CONFIG.wpdev = CONFIG.dev.copy("wpdev", CONFIG)
 CONFIG.wpdev.home = 'wpdev-gddtool.html'
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -115,19 +115,20 @@ CONFIG.tool = { 'toolname':'gddtool',       # name forwarding server knows
        'inherit_resources':'csftool',       # key to inherited set or resources
        'data_region_key':'NE',              # region covered by the server
        'data_source_key':'acis',            # source of model data
-       'default_plant_day':(5,1),           # day to begin GDD calculations 
+       'default_plant_day':[5,1],           # day to begin GDD calculations 
        'default_threshold':'50',            # default GDD threshold
+       'first_year':2015,                   # first year with data
        'season_start_day':SEASON_START_DAY, # first day required by tool
        'season_end_day':SEASON_END_DAY,     # last day required by tool
        }
 
 CONFIG.tool.button_labels = \
-       '{"trend":"Show Recent Trend", "season":"Show Season Outlook"}'
+       '{"outlook":"Show Season Outlook", "trend":"Show Recent Trend"}'
 # must be a javascript associative array as a string
 CONFIG.tool.chart_labels = \
-       '{"trend":"Recent Trend", "season":"Season Outlook"}'
+       '{"outlook":"Season Outlook", "season":"Season", "trend":"Recent Trend"}'
 # must be a simple javascript array as a string
-CONFIG.tool.chart_types = '["trend","season"]'
+CONFIG.tool.chart_types = '["season", "trend"]'
 
 # default location for this tool
 CONFIG.tool.location = { 'address':'Cornell University, Ithaca, NY',
@@ -152,7 +153,7 @@ resource_map = { '/' : ('page', 'file', ('pages','gddtool.html')),
                  'test-gddtool.html' : ('page',  'dir', 'pages'),
                  'wpdev-gddtool.html' : ('page',  'dir', 'pages'),
                }
-CONFIG.resources = ConfigMap(resource_map)
+CONFIG.resource_map = ConfigMap(resource_map)
 del resource_map
 # resources that require template validation
 CONFIG.data_requests = ('daysInSeason', 'history', 'pordaily', 'season')
@@ -221,30 +222,40 @@ CONFIG.datasets.doygrid = { 'dtype':int, 'dtype_packed':'<i2',
                             'end_day':PROJECT_END_DAY,
                             'description':'Accumulated GDD Matrix' }
 
-CONFIG.datasets.gddavg = CONFIG.datasets.doygrid.copy()
-CONFIG.datasets.gddavg.compression = 'gzip'
-CONFIG.datasets.gddavg.chunks = ('num_days',1,1)
-CONFIG.datasets.gddavg.dtype = float
-CONFIG.datasets.gddavg.dtype_packed = float
-CONFIG.datasets.gddavg.missing_data = N.nan
-CONFIG.datasets.gddavg.missing_packed = N.nan
+CONFIG.datasets.compressed = CONFIG.datasets.doygrid.copy()
+CONFIG.datasets.compressed.compression = 'gzip'
+CONFIG.datasets.compressed.chunks = ('num_days',1,1)
+CONFIG.datasets.compressed.dtype = float
+CONFIG.datasets.compressed.dtype_packed = float
+CONFIG.datasets.compressed.missing_data = N.nan
+CONFIG.datasets.compressed.missing_packed = N.nan
+
+CONFIG.datasets.gddavg = CONFIG.datasets.compressed.copy()
 CONFIG.datasets.gddavg.path = 'avg'
 CONFIG.datasets.gddavg.scope = 'por'
 CONFIG.datasets.gddavg.description = \
     '%(timespan)s - AVG %(coverage)s GDD (%%(threshold)s)'
 CONFIG.datasets.gddavg.timespan = 'Period of Record'
 
-CONFIG.datasets.pormax = CONFIG.datasets.gddavg.copy()
+CONFIG.datasets.gdd50 = CONFIG.datasets.compressed.copy('gdd50')
+CONFIG.datasets.gdd50.scope = '%(year)d'
+CONFIG.datasets.gdd50.description = 'Accumulated Daily GDD (gdd>50)'
+CONFIG.datasets.gdd50.timespan = '%(year)d'
+
+CONFIG.datasets.gdd8650 = CONFIG.datasets.gdd50.copy('gdd8650')
+CONFIG.datasets.gdd8650.description = 'Accumulated Daily GDD (50<gdd<86)'
+
+CONFIG.datasets.pormax = CONFIG.datasets.gddavg.copy('pormax')
 CONFIG.datasets.pormax.path = 'max'
 CONFIG.datasets.pormax.description = \
-    '%(timespan)s - MAX deviation from avg %(coverage)s GDD (%%(threshold)s)'
+    '%(timespan)s - MAX deviation from AVG %(coverage)s GDD (%%(threshold)s)'
 
-CONFIG.datasets.pormin = CONFIG.datasets.gddavg.copy()
+CONFIG.datasets.pormin = CONFIG.datasets.pormax.copy('pormin')
 CONFIG.datasets.pormin.path = 'min'
 CONFIG.datasets.pormin.description = \
-    '%(timespan)s - MIN deviation from avg %(coverage)s GDD (%%(threshold)s)'
+    '%(timespan)s - MIN deviation from AVG %(coverage)s GDD (%%(threshold)s)'
 
-CONFIG.datasets.normal = CONFIG.datasets.doygrid.copy()
+CONFIG.datasets.normal = CONFIG.datasets.doygrid.copy('normal')
 CONFIG.datasets.normal.compression = 'gzip'
 CONFIG.datasets.normal.chunks = ('num_days',1,1)
 CONFIG.datasets.normal.path = 'normal'
@@ -253,7 +264,7 @@ CONFIG.datasets.normal.timespan = 'Climatological Normal'
 CONFIG.datasets.normal.description = \
     '%(timespan)s - AVG accumulated GDD (%%(threshold)s)'
 
-CONFIG.datasets.recent = CONFIG.datasets.doygrid.copy()
+CONFIG.datasets.recent = CONFIG.datasets.doygrid.copy('recent')
 CONFIG.datasets.recent.compression = 'gzip'
 CONFIG.datasets.recent.chunks = ('num_days',1,1)
 CONFIG.datasets.recent.path = 'recent'
@@ -274,8 +285,8 @@ CONFIG.view_map = { ('time','lat','lon'):'tyx', ('lat','lon','time'):'yxt',
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # GDD tool filename templates
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-CONFIG.filenames = { 'history':'%(days)d-Day-GDD-%(threshold)s-History.h5',
-                     'normal':'%(days)d-Day-GDD-%(threshold)s-Normal.h5',
+CONFIG.filenames = { 'history':'%(year)d-GDD-%(threshold)s-History.h5',
+                     'target':'%(year)d-GDD-%(source)s-Daily.h5',
                    }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -283,16 +294,16 @@ CONFIG.filenames = { 'history':'%(days)d-Day-GDD-%(threshold)s-History.h5',
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CONFIG.filetypes = { 'history' : { 'scope':'season', 'period':'doy', 
                                    'groups':('por',),
-                                   'datasets':('lat','lon','recent'), 
+                                   'datasets':('lat','lon','recent','normal'), 
                                    'start_day':PROJECT_START_DAY,
                                    'end_day':PROJECT_END_DAY,
                                    'description':'Historical GDD Extremes'
                                  },
-                     'normal' : { 'scope':'season', 'period':'doy', 
-                                  'datasets':('lat','lon','normal'), 
+                     'target' : { 'scope':'year', 'period':'doy', 
+                                  'datasets':('lat','lon','gdd50', 'gdd8650'), 
                                   'start_day':PROJECT_START_DAY,
                                   'end_day':PROJECT_END_DAY,
-                                  'description':'Climate Normal GDD Extremes'
+                                  'description':'Daily Accumulated GDD'
                                 }
                     }
 
@@ -304,7 +315,7 @@ ConfigObject('groups', CONFIG)
 CONFIG.groups.por = { 'path':'por', 'keys':('timespan','threshold',),
        'datasets':('gddavg','pormax','pormin'),
        'start_day':PROJECT_START_DAY, 'end_day':PROJECT_END_DAY,
-       'description':'Growing Degree Days - Period of Record Accumulation'
+       'description':'%(timespan)s - Accumulated GDD (%(threshold)s)'
        }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

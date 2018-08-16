@@ -14,7 +14,7 @@ from atmosci.utils.timeutils import asAcisQueryDate
 # which, in turn, means we can re-use scripts from the 
 # atmosci.seasonal package without making changes 
 from atmosci.seasonal.config import CFGBASE
-CONFIG = CFGBASE.copy()
+CONFIG = CFGBASE.copy('config', None)
 del CFGBASE
 
 
@@ -27,15 +27,22 @@ if 'win32' in sys.platform:
     CONFIG.dirpaths.static  = 'C:\\Work\\app_data\\shared\\grid\\static'
     CONFIG.dirpaths.working = 'C:\\Work\\app_data'
 else:
-    CONFIG.dirpaths.project = '/Volumes/data/app_data/gdd'
-    CONFIG.dirpaths.shared  = '/Volumes/data/app_data/shared'
-    CONFIG.dirpaths.static  = '/Volumes/data/app_data/shared/grid/static'
-    CONFIG.dirpaths.working = '/Volumes/data/app_data'
+#    CONFIG.dirpaths.project = '/Volumes/data/app_data/gdd'
+#    CONFIG.dirpaths.shared  = '/Volumes/data/app_data/shared'
+#    CONFIG.dirpaths.static  = '/Volumes/data/app_data/shared/grid/static'
+#    CONFIG.dirpaths.working = '/Volumes/data/app_data'
+    CONFIG.dirpaths.project = '/Volumes/Transport/data/app_data/gdd'
+    CONFIG.dirpaths.shared  = '/Volumes/Transport/data/app_data/shared'
+    CONFIG.dirpaths.static  = '/Volumes/Transport/data/app_data/shared/grid/static'
+    CONFIG.dirpaths.working = '/Volumes/Transport/data/app_data'
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # GDD project configuration
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+CONFIG.project.bbox = { 'NE':'-82.75,37.125,-66.7916,47.708',
+                        'conus':'-125.00001,23.99999,-66.04165,49.95834',
+                      }
 CONFIG.project.compression = 'gzip'
 CONFIG.project.end_day = (10,31)
 CONFIG.project.forecast = 'ndfd'
@@ -108,28 +115,30 @@ CONFIG.datasets.srccumgdd.description = 'Accumulated Growing Degree Days'
 CONFIG.filenames.project = '%(year)d-GDD-%(gdd)s.h5'
 CONFIG.filenames.por = '%(year)d-GDD-%(source)s-Daily.h5'
 CONFIG.filenames.history = '%(year)d-%(coverage)s-GDD-%(threshold)s-History.h5'
+CONFIG.filenames.normal = '%(year)d-%(coverage)s-GDD-%(threshold)s-Climate-Norm.h5'
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # GDD project filetypes
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# daily GDD data for individual year
 CONFIG.filetypes.por = { 'scope':'year', 'period':'date', 
        'datasets':('lon','lat'),
        'groups':('daily50', 'daily8650'),
        'description':'Data downloaded from %(source)s',
        'start_day':(1,1), 'end_day':(12,31) }
 
+# daily temperatures for individual year
 CONFIG.filetypes.source = { 'scope':'year', 'period':'date', 
        'datasets':('lon','lat'), 'groups':('tempexts',),
        'description':'Data downloaded from %(source)s',
        'start_day':(1,1), 'end_day':(12,31) }
 
+# GDD extremes for recent history (previous 15 years)
 CONFIG.filetypes.history50 = { 'filename':'history', 'filetype':'history',
        'scope':'por', 'period':'doy', 'datasets':('lon','lat',),
        'groups':( ('timespan',{'path':'recent','threshold':'gdd>50',
                                'timespan':'Previous 15 Years'}),
-                  ('timespan',{'path':'normal','threshold':'gdd>50',
-                               'timespan':'Climatological Record'}),
                   ('timespan',{'path':'por','threshold':'gdd>50',
                                'timespan':'Period of Record'}), ),
        'description':'%(coverage)s GDD (gdd>50) Time Series',
@@ -139,10 +148,25 @@ CONFIG.filetypes.history8650 = { 'filename':'history', 'filetype':'history',
        'scope':'por', 'period':'doy', 'datasets':('lon','lat',),
        'groups':( ('timespan',{'path':'recent','threshold':'gdd>8650',
                                'timespan':'Recent Record'}),
-                  ('timespan',{'path':'normal','threshold':'gdd>8650',
-                               'timespan':'Climatological Record'}),
                   ('timespan',{'path':'por','threshold':'gdd>8650',
                                'timespan':'Period of Record'}), ),
+       'description':'%(coverage)s GDD (gdd>8650) Time Series',
+       'start_day':(1,1), 'end_day':(12,31) }
+
+# GDD climate normal extremes (1981-2010)
+CONFIG.filetypes.normal50 = { 'filename':'normal', 'filetype':'normal',
+       'scope':'por', 'period':'doy', 'datasets':('lon','lat',),
+       'groups':( ('timespan',{'path':'normal','threshold':'gdd>50',
+                               'timespan':'Climatological Record'}),
+                ),
+       'description':'%(coverage)s GDD (gdd>50) Time Series',
+       'start_day':(1,1), 'end_day':(12,31) }
+
+CONFIG.filetypes.normal8650 = { 'filename':'normal', 'filetype':'normal',
+       'scope':'por', 'period':'doy', 'datasets':('lon','lat',),
+       'groups':( ('timespan',{'path':'normal','threshold':'gdd>8650',
+                               'timespan':'Climatological Record'}),
+                ),
        'description':'%(coverage)s GDD (gdd>8650) Time Series',
        'start_day':(1,1), 'end_day':(12,31) }
 

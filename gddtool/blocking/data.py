@@ -7,7 +7,7 @@ from atmosci.utils.timeutils import asDatetimeDate, DateIterator, elapsedTime
 
 from csftool.blocking.handler import CsfToolRequestHandlerMethods
 
-from gddtool.factory import GDDToolPORFactory, GDDToolHistoryFactory
+from gddtool.factory import GDDToolHistoryFactory, GDDToolTargetYearFactory
 from gddtool.handler import GDDToolRequestHandlerMethods
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -70,69 +70,6 @@ class GDDToolBlockingDataMethods(GDDToolRequestHandlerMethods,
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-class GDDToolPORDailyDataHandler(GDDToolHistoryFactory,
-                                 GDDToolBlockingDataMethods):
-
-    def __init__(self, server_config, debug=False, **kwargs):
-        GDDToolHistoryFactory.__init__(self)
-        GDDToolBlockingDataMethods.__init__(self, server_config)
-
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-    def __call__(self, request):
-        start_response = datetime.datetime.now()
-
-        # decode request variables into a dictionary
-        request_dict = self.requestAsDict(request)
-
-        # extract location coordinates
-        location = request_dict['location']
-        coords = location.get('coords',None)
-        if coords is not None:
-            lat = float(coords[0])
-            lon = float(coords[1])
-        else:
-            lat = float(location['lat'])
-            lon = float(location['lon'])
-
-        # GDD threshold and target_year
-        gdd_threshold = request_dict['gdd_threshold']
-        year = request_dict.get('season', None)
-
-        # get the configured season limits
-        dates = self.extractSeasonDates(request_dict, year)
-        season_start = asDatetimeDate(dates['season_start'])
-        season_end = asDatetimeDate(dates['season_end'])
-        target_year = dates['season']
-        del dates['season']
-        # initialize response string with season dates
-        response = \
-            '{"daily":{%s,"data":{' % self.tightJsonString(dates)[1:-1]
-
-        reader = self.getHistoryFileReader(target_year, self.source,
-                                    self.region, gdd_threshold, 'daily')
-        # add period of record extremes
-        data = self.serializeData(reader.getSliceAtNode('por.max', season_start, season_end, lon, lat))
-        response = '%s"pormax":%s' % (response, data)
-
-        data = self.serializeData(reader.getSliceAtNode('por.min', season_start, season_end, lon, lat))
-        response = '%s,"pormin":%s}}}' % (response, data)
-
-        reader.close()
-        del data
-        if self.mode in ('dev', 'test'):
-            print 'pordaily data retrieved in',elapsedTime(start_response,True)
-
-        self.respond(request, response)
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-GDDTOOL_DATA_HANDLERS['pordaily'] = GDDToolPORDailyDataHandler
-GDDTOOL_DATA_HANDLERS['/pordaily'] = GDDToolPORDailyDataHandler
-
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
 class GDDToolAccumulationHistoryHandler(GDDToolHistoryFactory,
                                         GDDToolBlockingDataMethods):
 
@@ -147,7 +84,6 @@ class GDDToolAccumulationHistoryHandler(GDDToolHistoryFactory,
 
         # decode request variables into a dictionary
         request_dict = self.requestAsDict(request)
-        print "GDDToolAccumulationHistoryHandler request\n", request_dict
 
         # extract location coordinates
         location = request_dict['location']
@@ -175,6 +111,8 @@ class GDDToolAccumulationHistoryHandler(GDDToolHistoryFactory,
 
         reader = self.getHistoryFileReader(target_year, self.source,
                                            self.region, gdd_threshold)
+        if self.mode in ('dev', 'test'):
+            print 'history file :', reader.filepath
         # add recent averages
         data = \
         reader.getSliceAtNode('recent', season_start, season_end, lon, lat)
@@ -216,11 +154,11 @@ GDDTOOL_DATA_HANDLERS['/history'] = GDDToolAccumulationHistoryHandler
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 
-class GDDToolCurrentSeasonDataHandler(GDDToolPORFactory,
-                                      GDDToolBlockingDataMethods):
+class GDDToolTargetYearDataHandler(GDDToolTargetYearFactory,
+                                   GDDToolBlockingDataMethods):
 
     def __init__(self, server_config, debug=False, **kwargs):
-        GDDToolPORFactory.__init__(self)
+        GDDToolTargetYearFactory.__init__(self)
         GDDToolBlockingDataMethods.__init__(self, server_config)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -230,7 +168,6 @@ class GDDToolCurrentSeasonDataHandler(GDDToolPORFactory,
 
         # decode request variables into a dictionary
         request_dict = self.requestAsDict(request)
-        print "GDDToolCurrentSeasonDataHandler request\n", request_dict
 
         # extract location coordinates
         location = request_dict['location']
@@ -244,46 +181,63 @@ class GDDToolCurrentSeasonDataHandler(GDDToolPORFactory,
 
         # GDD threshold and target_year
         gdd_threshold = str(request_dict['gdd_threshold'])
-        year = request_dict.get('season', None)
+        target_year = request_dict.get('season', None)
+        if target_year is None: target_year = datetime.date.today().year
 
         # get the configured season limits
-        dates = self.extractSeasonDates(request_dict, year)
-        season_start = asDatetimeDate(dates['season_start'])
-        season_end = asDatetimeDate(dates['season_end'])
-        target_year = dates['season']
+        dates = self.extractSeasonDates(request_dict, target_year)
 
         # initialize the response
         response_json = \
-            '{"season":{"gdd_threshold":"%s","season":%d' % (gdd_threshold,target_year)
+            '{"season":{"gdd_threshold":"%s"' % gdd_threshold
         response_json = \
             '%s,"location":%s' % (response_json,self.tightJsonString(location))
 
         # create a POR file reader
-        reader = self.getPORFileReader(target_year, self.source, self.region)
+        reader = \
+        self.getTargetYearFileReader(target_year, self.source, self.region)
+        if self.mode in ('dev','test'):
+            print 'season data file :', reader.filepath
         
         # create path to GDD dataset
-        dataset_path = reader.gddDatasetPath('accumulated', gdd_threshold)
+        dataset_path = reader.gddDatasetPath(gdd_threshold)
 
         # capture the significant dates for the dataset
-        if self.mode_config != None:
+        if 'dates' in self.mode_config \
+        and target_year == self.mode_config.season:
             dates.update(self.mode_config.dates.attrs)
         else: dates.update(reader.getSignificantDates(dataset_path))
+        season_end = dates['season_end']
+        end_date = asDatetimeDate(season_end)
+        start_date = asDatetimeDate(dates['season_start'])
+        if 'fcast_start' in dates:
+            fcast_start = asDatetimeDate(dates['fcast_start'])
+            if fcast_start > end_date: del dates['fcast_start']
+        if 'fcast_end' in dates:
+            fcast_end = asDatetimeDate(dates['fcast_end'])
+            if fcast_end > end_date:
+                if 'fcast_start' in dates: dates['fcast_end'] = season_end
+                else: del dates['fcast_end']
+        last_obs = asDatetimeDate(dates['last_obs'])
+        if last_obs > end_date: dates['last_obs'] = season_end
+        last_valid = asDatetimeDate(dates['last_valid'])
+        if last_valid > end_date:
+            dates['last_valid'] = season_end
+            last_valid = asDatetimeDate(season_end)
 
-        fcast_end = asDatetimeDate(dates['fcast_end'])
-        if fcast_end > season_end: fcast_end = season_end
         # temporarily free up the POR file
         reader.close()
 
         # add season dates to response
         response_json = \
-            '%s,%s' % (response_json, self.tightJsonString(dates)[1:-1])
+            '%s,"dates":%s' % (response_json, self.tightJsonString(dates))
         del dates
 
         # get the accumulated GDD for Y axis of data plots
         reader.open()
         response_json = '%s,"data":{"season":%s}}}' % (response_json, 
                         self.serializeData(reader.getDataAtNode(dataset_path,
-                                           lon, lat, season_start, fcast_end)))
+                                           lon, lat, start_date, last_valid)))
         reader.close()
         if self.mode in ('dev','test'):
             print 'season data retrieved in ', elapsedTime(start_response,True)
@@ -294,18 +248,18 @@ class GDDToolCurrentSeasonDataHandler(GDDToolPORFactory,
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-GDDTOOL_DATA_HANDLERS['season'] = GDDToolCurrentSeasonDataHandler
-GDDTOOL_DATA_HANDLERS['/season'] = GDDToolCurrentSeasonDataHandler
+GDDTOOL_DATA_HANDLERS['season'] = GDDToolTargetYearDataHandler
+GDDTOOL_DATA_HANDLERS['/season'] = GDDToolTargetYearDataHandler
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 
-class GDDToolCurrentSeasonDaysHandler(GDDToolPORFactory,
-                                      GDDToolBlockingDataMethods):
+class GDDToolTargetYearDaysHandler(GDDToolTargetYearFactory,
+                                   GDDToolBlockingDataMethods):
 
     def __init__(self, server_config, debug=False, **kwargs):
-        GDDToolPORFactory.__init__(self)
+        GDDToolTargetYearFactory.__init__(self)
         GDDToolBlockingDataMethods.__init__(self, server_config)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -328,6 +282,6 @@ class GDDToolCurrentSeasonDaysHandler(GDDToolPORFactory,
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-GDDTOOL_DATA_HANDLERS['daysInSeason'] = GDDToolCurrentSeasonDaysHandler
-GDDTOOL_DATA_HANDLERS['/daysInSeason'] = GDDToolCurrentSeasonDaysHandler
+GDDTOOL_DATA_HANDLERS['daysInSeason'] = GDDToolTargetYearDaysHandler
+GDDTOOL_DATA_HANDLERS['/daysInSeason'] = GDDToolTargetYearDaysHandler
 

@@ -1,6 +1,8 @@
 
 ;(function(jQuery) {
 
+console.log("loading CHART plugin");
+
 var gddToolTooltipFormatter = function() {
     var tip = '<span style="font-size:12px;font-weight:bold;text-align:center">' + Highcharts.dateFormat('%b %d, %Y', this.x) + '</span>'
     jQuery.each(this.points, function() {
@@ -62,7 +64,7 @@ var GddChartController = {
     location: null,
     pending_series: [ ],
     plant_date: null,
-    season: null,
+    year: null,
 
     // FUNCTIONS
     highchartsIsAvailable: function() { return (typeof Highcharts != "undefined"); },
@@ -73,10 +75,7 @@ var GddChartController = {
                 this.chart.addSeries(data, true);
                 this.drawn.push(data_type);
                 if (this.pending_series.length  > 0) { this.drawPending(); }
-        } else {
-             console.log("CHART NOT READY ... " + data_type + " wants to be drawn");
-             this.pending_series.push([data_type, data]);
-        }
+        } else { this.pending_series.push([data_type, data]); }
     },
 
     addSeriesType: function(data_type) {
@@ -145,15 +144,23 @@ var GddChartController = {
     genCurrentSeason: function() { // from plant date thru last obs
         var start = this.date_manager.indexOf("plant_date");
         var end = this.trendEndIndex("last_obs");
-        return jQuery.extend(true, { data: this.genDataPairs("season", start, end, start) }, this.components.season);
+        if (start < end) {
+            var data = { data: this.genDataPairs("season", start, end, start) }
+            return jQuery.extend(true, data, this.components.season);
+        } else { return null; }
     },
 
     genCurrentForecast: function() { // add forecast to extend season
         var base = this.date_manager.indexOf("plant_date");
+        if (base < 0) { return null; }
         var start = this.date_manager.indexOf("fcast_start");
         if (start >= this.date_manager.num_days_in_season) { return null; }
         var end = this.trendEndIndex("fcast_end");
-        return jQuery.extend(true, { data: this.genDataPairs("season", start, end, base) }, this.components.forecast);
+        if (base < end) {
+            if (base < start) { start = base; }
+            var data = { data: this.genDataPairs("season", start, end, base) }
+            return jQuery.extend(true, data, this.components.forecast);
+        } else { return null; }
     },
 
     genPeriodOfRecord: function() {
@@ -186,6 +193,7 @@ var GddChartController = {
     },
 
     newChart: function() {
+
         if (this.chart != null) { this.chart.destroy(); this.chart = null; }
 
         var config = jQuery.extend(true, { }, this.chart_config);
@@ -209,7 +217,10 @@ var GddChartController = {
     setChartWidth: function(width) { this.chart_config.chart["width"] = width; },
 
     setGddThreshold: function(threshold) { 
-        if (threshold != this.gdd_threshold) { this.gdd_threshold = threshold.toString(); this.change_pending = true; }
+        if (threshold != this.gdd_threshold) {
+            this.gdd_threshold = threshold.toString();
+            this.change_pending = true;
+        }
     },
 
     setLabel: function(key, label) { this.chart_labels[key] = label; },
@@ -275,7 +286,7 @@ var jQueryDisplayProxy = function() {
             case "change_pending": // return current state
                 return GddChartController.change_pending;
                 break;
-            case "chart": // return currently display chart type
+            case "chart": // return currently displayed chart type
             case "chart_type":
                 return GddChartController.chart_type;
                 break;
@@ -318,6 +329,7 @@ jQuery.fn.GddToolChart = function(options) {
     var dom_element = this.get(0);
     if (typeof options !== 'undefined') { GddChartController.setOptions(options); }
     GddChartController.init(dom_element);
+    console.log("EVENT :: GddToolChart plugin ready");
     return jQueryDisplayProxy;
 }
 

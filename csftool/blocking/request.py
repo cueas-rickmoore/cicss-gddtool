@@ -85,8 +85,7 @@ class CsfToolBlockingRequestManager(CsfToolRequestHandlerMethods, object):
 
         # decode the uri to find the resource info
         result = self.decodeUri(uri)
-        if not isinstance(result, tuple):
-            return None
+        if not isinstance(result, tuple): return None
         if self.debug: print "seeking handler for", uri, result
         resource_group, resource_type, resource = result
         if self.debug: 
@@ -130,9 +129,6 @@ class CsfToolBlockingRequestManager(CsfToolRequestHandlerMethods, object):
 
     def handlerClassSearch(self, resource_group, resource_path):
         handlers = self.response_handlers.get(resource_group, None)
-        if self.debug: 
-            print 'handlerClassSearch :', resource_group, resource_path
-            print 'handlers found :', handlers
         if handlers:
             if isinstance(resource_path, basestring):
                 handler = handlers.get(resource_path, None)

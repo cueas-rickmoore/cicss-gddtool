@@ -212,7 +212,7 @@ class CsfToolRequestHandlerMethods:
         self.tool = config.tool
 
         # create attribute for reference to resources config
-        self.resources = config.resources
+        self.resources = config.resources.copy('resources', None)
 
         # create attribute for list of template requests
         self.templates = config.get('templates',())
@@ -223,9 +223,7 @@ class CsfToolRequestHandlerMethods:
         # create dmode attribute to override dataset provided dates
         # with a consitent set of dates from the config file
         self.mode = server_config.mode
-        if self.mode != 'prod':
-            self.mode_config = server_config[server_config.mode]
-        else: self.mode_config = None
+        self.mode_config = server_config[server_config.mode]
 
         # create attribute for the rest of the configuration
         self.server_config = config

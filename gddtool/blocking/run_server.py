@@ -13,8 +13,6 @@ from gddtool.blocking.request import GDDToolBlockingRequestManager
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-from csftool.blocking.files import CSFTOOL_FILE_HANDLERS
-
 from gddtool.blocking.data import GDDTOOL_DATA_HANDLERS
 from gddtool.blocking.files import GDDTOOL_FILE_HANDLERS
 
@@ -40,7 +38,7 @@ parser.add_option('--source', action='store', type='string', default=None,
 parser.add_option('--tool', action='store', type='string', default=None,
                   dest='toolname')
 
-parser.add_option('-c', action='store_false', default=True, dest='csftool')
+parser.add_option('-c', action='store_true', default=False, dest='csftool')
 parser.add_option('-d', action='store_true', default=False, dest='demo_mode')
 parser.add_option('-p', action='store_true', default=False, dest='prod_mode')
 parser.add_option('-t', action='store_true', default=False, dest='test_mode')
@@ -51,21 +49,33 @@ options, args = parser.parse_args()
 
 debug = options.debug
 
-include_csftool_resources = options.csftool
-
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+
+# allow for specialized alternate tool configurations
+if options.prod_mode: mode = "prod"
+elif options.test_mode: mode = "test"
+elif options.wpdev_mode: mode = "wpdev"
+else: mode = "dev"
+include_csftool = mode in ("dev", "wpdev") or options.csftool
 
 # import the default GDD server configuration
 from gddtool.config import CONFIG as GDD_TOOL_CONFIG
 server_config = GDD_TOOL_CONFIG.copy()
-del server_config['resources']
-# validate the resources and get full path to each
-gdd_resources = validateResourceConfiguration(GDD_TOOL_CONFIG)
 # don't drag the tool config around
 del GDD_TOOL_CONFIG
-# create a new resources config 
-server_config.resources = { 'gddtool':gdd_resources, }
-del gdd_resources
+
+mode_config = server_config[mode]
+server_config.mode = mode
+server_config.update(mode_config.attrs)
+server_config.dirpaths = mode_config.dirpaths.attrs
+# validate the resources and get full path to each
+server_config.resources = \
+    { 'gddtool': validateResourceConfiguration(server_config), }
+
+if options.demo_mode:
+    server_config.dates = server_config.demo.dates.copy('dates')
+    server_config.season = server_config.demo.season
 
 # look for a config overrides file
 cfgfile = None
@@ -101,26 +111,6 @@ if options.toolname is not None:
 else: toolname = server_config.tool.toolname 
 server_config.toolname = toolname
 
-# allow for specialized alternate tool pages
-
-if options.prod_mode:
-    server_config.mode = "prod"
-    server_config.update(server_config.prod.attrs)
-    include_csftool_resources = False
-elif options.demo_mode:
-    server_config.mode = "demo"
-    server_config.update(server_config.demo.attrs)
-    include_csftool_resources = False
-elif options.test_mode:
-    server_config.mode = "test"
-    server_config.update(server_config.test.attrs)
-elif options.wpdev_mode:
-    server_config.mode = "wpdev"
-    server_config.update(server_config.wpdev.attrs)
-else:
-    server_config.mode = "dev"
-    server_config.update(server_config.dev.attrs)
-
 if options.tool_page is None:
     tool_page = server_config.get('home', None)
 else: tool_page = options.tool_page
@@ -153,25 +143,31 @@ if len(args) > 0:
     pid_file.close()
 
 server_config.debug = debug
+
+# import the CSF tool configuration
+if include_csftool:
+    from csftool.config import CONFIG as CSF_TOOL_CONFIG
+    csftool_config = CSF_TOOL_CONFIG.copy()
+    del CSF_TOOL_CONFIG
+    # validate the resources and get full path to each
+    csftool_config.dirpaths.resources = \
+        server_config.dirpaths.resources.replace('gddtool','csftool')
+    server_config.resources.csftool = \
+        validateResourceConfiguration(csftool_config)
+    #server_config.resources = { 'gddtool' : server_config.resources.gddtool,
+    #              'csftool' : validateResourceConfiguration(csftool_config) }
+    del csftool_config
+
 # create a request manager
 request_manager =  GDDToolBlockingRequestManager(server_config)
 request_manager.registerResponseHandlers(toolname, **GDDTOOL_FILE_HANDLERS)
 request_manager.registerResponseHandlers(toolname, **GDDTOOL_DATA_HANDLERS)
-
-# import the CSF tool configuration
-if include_csftool_resources:
-    from csftool.config import CONFIG as CSF_TOOL_CONFIG
-    # validate the resources and get full path to each
-    csf_resources = validateResourceConfiguration(CSF_TOOL_CONFIG)
-    # don't drag the CSF tool config around
-    del CSF_TOOL_CONFIG
-    server_config.resources.csftool = csf_resources
-    del csf_resources
+if include_csftool:
+    from csftool.blocking.files import CSFTOOL_FILE_HANDLERS
     request_manager.registerResponseHandlers('csftool',**CSFTOOL_FILE_HANDLERS)
 
 # create an HTTP server
-http_server = \
-    CsfToolBlockingHttpServer(server_config, request_manager)
+http_server = CsfToolBlockingHttpServer(server_config, request_manager)
 # run the server
 http_server.run()
 

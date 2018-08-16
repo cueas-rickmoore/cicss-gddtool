@@ -5,6 +5,7 @@ import datetime
 from atmosci.acis.griddata import AcisGridDownloadMixin
 
 from gddapp.history.factory import GDDHistoryFileMethods
+from gddapp.normals.factory import GDDNormalsFileMethods
 from gddapp.por.factory import GDDPeriodOfRecordFileMethods
 from gddapp.project.factory import BaseGDDProjectFactory
 
@@ -17,9 +18,8 @@ from gddapp.registry import REGISTRY
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-class GDDAppProjectFactory(GDDPeriodOfRecordFileMethods,
-                           GDDHistoryFileMethods,
-                           BaseGDDProjectFactory):
+class GDDAppProjectFactory(GDDPeriodOfRecordFileMethods, GDDNormalsFileMethods,
+                           GDDHistoryFileMethods, BaseGDDProjectFactory):
 
     def __init__(self, config=CONFIG, registry=REGISTRY):
         BaseGDDProjectFactory.__init__(self, config, registry)

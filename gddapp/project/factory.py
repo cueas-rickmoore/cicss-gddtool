@@ -5,21 +5,9 @@ from atmosci.seasonal.factory import BasicSeasonalProjectFactory
 from atmosci.seasonal.methods.source import SourceFileAccessorMethods
 from atmosci.seasonal.methods.static import StaticFileAccessorMethods
 
-
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-class BaseGDDProjectFactory(SourceFileAccessorMethods,
-                            StaticFileAccessorMethods,
-                            BasicSeasonalProjectFactory):
-
-    def __init__(self, config=None, registry=None):
-        if config is None:
-            from gddapp.config import CONFIG
-            config = CONFIG
-        if registry is None:
-            from gddapp.registry import REGISTRY
-            registry = REGISTRY
-        BasicSeasonalProjectFactory.__init__(self, config, registry)
+class BaseGDDProjectFactoryMethods():
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -70,4 +58,21 @@ class BaseGDDProjectFactory(SourceFileAccessorMethods,
         for threshold in self.config.project.gdd_thresholds:
             gdd_thresholds.append(self.gddThresholdAsString(threshold))
         return tuple(gdd_thresholds)
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+class BaseGDDProjectFactory(BaseGDDProjectFactoryMethods,
+                            SourceFileAccessorMethods,
+                            StaticFileAccessorMethods,
+                            BasicSeasonalProjectFactory):
+
+    def __init__(self, config=None, registry=None):
+        if config is None:
+            from gddapp.config import CONFIG
+            config = CONFIG
+        if registry is None:
+            from gddapp.registry import REGISTRY
+            registry = REGISTRY
+        BasicSeasonalProjectFactory.__init__(self, config, registry)
 
