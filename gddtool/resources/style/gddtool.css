@@ -1,0 +1,170 @@
+@media screen {
+
+    .csf-center { text-align: center; }
+    .csf-left { text-align: left; }
+    .csf-em { font-weight: bold; }
+    .csf-clearfix { overflow: auto; }
+
+    #csftool-content {
+        height: 450px;
+        width: 904px;
+        margin: 0 0 0 0;
+        border: 2px solid #00bb00;
+    }
+
+    /* input panel */
+    #csftool-input {
+        display: inline-block;
+        float: left;
+        height: 450px;
+        width: 198px;
+        margin: 0 0 0 0;
+        padding: 0 0 0 0;
+        background: #ffffff;
+        border-right: 2px solid #00bb00;
+        /*border: 2px solid #00bb00;*/
+    }
+
+    #csftool-input input[type="text"],
+    #csftool-input input[type="number"],
+    #csftool-input select {
+        display: inline;
+        height: 25px;
+        line-height: 1.25em;
+        padding: 0;
+        margin-bottom: 0;
+        font-size: 1em;
+        color: #000000;
+        border-radius: 3px;
+        vertical-align: middle;
+        box-shadow: none;
+        border: 0;
+        width: 120px;
+        max-width: 196px;
+        font-family: "Lato", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        background-color: #eaedf2;
+        -webkit-transition: background-color 0.24s ease-in-out;
+        transition: background-color 0.24s ease-in-out;
+    }
+
+    #csftool-input input[type="text"].error,
+    #csftool-input input[type="text"].is-invalid,
+    #csftool-input input[type="number"].error,
+    #csftool-input input[type="number"].is-invalid,
+    #csftool-input select.error,
+    #csftool-input select.is-invalid {
+        color: #df2029;
+        border-color: #fbe3e4;
+        background-color: #fbe3e4;
+        background-position: 99% center;
+        background-image: none;
+        outline-color: #fbe3e4;
+    }
+
+    #gddtool-location {
+        width: 100%;
+        margin: 1em 0 0 0;
+        padding: 0 0 0 5px;
+        font-size: 0.9em;
+        line-height: 1.25;
+        color: #000000;
+        }
+    span.gddtool-location-address {
+        color: #45930b;
+        padding: 0 0 0 10px;
+    }
+    #gddtool-current-lat,
+    #gddtool-current-lng {
+        color: #45930b;
+        padding: 0 0 0 5px;
+    }
+    #gddtool-location .ui-button {
+        margin: 5px auto;
+        display: block;
+    }
+
+    #gddtool-plant-date {
+        width: 100%;
+        margin: 35px 0 0 0;
+        padding: 0 0 0 5px;
+        font-size: 1em;
+        line-height: 1.25;
+        color: #000000;
+    }
+
+    #gddtool-date-selector {
+        width: 100%;
+        margin: 0 0 0 0;
+    }
+    #gddtool-date-selector input[type="text"] {
+        font-size: 1em;
+        max-width: 16em;
+        padding: 0 12px 0 3px;
+    }
+    #gddtool-date-selector input[type="text"]:active,
+    #gddtool-date-selector input[type="text"]:focus {
+        font-size: 1em;
+        background-color: #f7f8fa;
+        border: 1px solid #00bb00;
+    }
+
+    #gddtool-thresholds {
+        font-size: 1em;
+        width: 100%;
+        margin: 35px 0 0 0;
+        padding: 0 0 0 5px;
+        line-height: 1.25;
+        color: #000000;
+    }
+
+    #gddtool-chart-button {
+        margin: 35px auto;
+        width: 100%;
+    }
+    #gddtool-toggle-display .ui-button {
+        display: block;
+        margin: auto;
+    }
+    #gddtool-toggle-display .ui-button-text-only .ui-button-text {
+        padding: .2em;
+    }
+    #gddtool-no-toggle-text {
+        display: none;
+        font-size: 0.9em;
+        font-weight: bold;
+        padding: 0 0 0 5px;
+    }
+
+    /* display panel */
+    #csftool-display {
+        height: 450px;
+        width: 700px;
+        margin-left: 200px;
+        /*border-top: 2px solid #00bb00;
+        border-right: 2px solid #00bb00;
+        border-bottom: 2px solid #00bb00;*/
+        text-align: center;
+        line-height: 1em;
+        background: #ffffff;
+    }
+
+    #gddtool-display-chart {
+        /* height: 410px; */
+        height: 448px;
+        width: 700px;
+        margin: 0 0 0 0;
+        text-align: center;
+    }
+    #gddtool-display-msg {
+        font-size: 0.9em;
+        /* height: 40px; */
+        height: 0px;
+        width: 100%;
+        margin: 0 4px 0 4px;
+        text-align: center;
+        /* border-top: 2px solid #3baae3; */
+    }
+
+/* end of gddtool screen styling */
+}
+

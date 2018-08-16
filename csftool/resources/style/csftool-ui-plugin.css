@@ -1,0 +1,119 @@
+@media screen {
+
+    #csftool-input input[type="text"],
+    #csftool-input input[type="number"],
+    #csftool-input select {
+        display: inline;
+        height: 25px;
+        line-height: 1.25em;
+        padding: 0;
+        margin-bottom: 0;
+        font-size: 1em;
+        color: #000000;
+        border-radius: 3px;
+        vertical-align: middle;
+        box-shadow: none;
+        border: 0;
+        width: 120px;
+        max-width: 196px;
+        font-family: "Lato", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        background-color: #eaedf2;
+        -webkit-transition: background-color 0.24s ease-in-out;
+        transition: background-color 0.24s ease-in-out;
+    }
+
+    #csftool-input input[type="text"].error,
+    #csftool-input input[type="text"].is-invalid,
+    #csftool-input input[type="number"].error,
+    #csftool-input input[type="number"].is-invalid,
+    #csftool-input select.error,
+    #csftool-input select.is-invalid {
+        color: #df2029;
+        border-color: #fbe3e4;
+        background-color: #fbe3e4;
+        background-position: 99% center;
+        background-image: none;
+        outline-color: #fbe3e4;
+    }
+
+    #csftool-location-interface {
+        width: 100%;
+        margin: 1em 0 0 0;
+        padding: 0 0 0 5px;
+        font-size: 0.9em;
+        line-height: 1.25;
+        color: #000000;
+        }
+    #csftool-location-interface span.csftool-location-address {
+        color: #45930b;
+        padding: 0 0 0 10px;
+    }
+    #csftool-location-interface span#csftool-current-lat,
+    #csftool-location-interface span#csftool-current-lng {
+        color: #45930b;
+        padding: 0 0 0 5px;
+    }
+    #csftool-change-location .ui-button {
+        margin: 5px auto;
+        display: block;
+    }
+
+    #csftool-chart-start-date {
+        width: 100%;
+        margin: 35px 0 0 0;
+        padding: 0 0 0 5px;
+        font-size: 1em;
+        line-height: 1.25;
+        color: #000000;
+    }
+
+    #csftool-chart-start-date span { font-weight: bold; }
+
+    #csftool-date-selector {
+        width: 100%;
+        margin: 0 0 0 0;
+    }
+    #csftool-date-selector input[type="text"] {
+        font-size: 1em;
+        max-width: 16em;
+        padding: 0 12px 0 3px;
+    }
+    #csftool-date-selector input[type="text"]:active,
+    #csftool-date-selector input[type="text"]:focus {
+        font-size: 1em;
+        background-color: #f7f8fa;
+        border: 1px solid #00bb00;
+    }
+
+    #csftool-data-sources {
+        font-size: 1em;
+        width: 100%;
+        margin: 35px 0 0 0;
+        padding: 0 0 0 5px;
+        line-height: 1.25;
+        color: #000000;
+    }
+
+    #csftool-data-sources span { font-weight: bold; }
+
+    #csftool-chart-button {
+        margin: 35px auto;
+        width: 100%;
+    }
+    #csftool-toggle-display .ui-button {
+        display: block;
+        margin: auto;
+    }
+    #csftool-toggle-display .ui-button-text-only .ui-button-text {
+        padding: .2em;
+    }
+    #csftool-no-toggle-text {
+        display: none;
+        font-size: 0.9em;
+        font-weight: bold;
+        padding: 0 0 0 5px;
+    }
+
+/* end of csftool UI styling */
+}
+

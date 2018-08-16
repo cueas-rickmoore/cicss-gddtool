@@ -1,0 +1,105 @@
+/* <div id="csftool-wait-widget" class="nowait"></div> */
+
+#csftool-wait-widget {
+	width: 150px;
+	height: 150px;
+	line-height: 150px;
+	margin: 0 auto;
+	position: relative;
+	box-sizing: border-box;
+	text-align: center;
+    vertical-align: middle;
+	z-index: 0;
+	text-transform: uppercase;
+		-o-text-transform: uppercase;
+		-ms-text-transform: uppercase;
+		-webkit-text-transform: uppercase;
+		-moz-text-transform: uppercase;
+}
+
+#csftool-wait-widget.nowait {
+	width: 0px;
+	height: 0px;
+	line-height: 0px;
+}
+
+#csftool-wait-widget:after,
+#csftool-wait-widget:before {
+	opacity: 0;
+	box-sizing: border-box;
+		-o-box-sizing: border-box;
+		-ms-box-sizing: border-box;
+		-webkit-box-sizing: border-box;
+		-moz-box-sizing: border-box;
+	content: "\0020";
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	border-radius: 95px;
+	border: 5px solid rgba(221,250,220,0.57);
+	box-shadow: 0 0 47px rgb(83,171,48), inset 0 0 47px rgb(83,172,48);
+		-o-box-shadow: 0 0 47px rgb(83,171,48), inset 0 0 47px rgb(83,172,48);
+		-ms-box-shadow: 0 0 47px rgb(83,171,48), inset 0 0 47px rgb(83,172,48);
+		-webkit-box-shadow: 0 0 47px rgb(83,171,48), inset 0 0 47px rgb(83,172,48);
+		-moz-box-shadow: 0 0 47px rgb(83,171,48), inset 0 0 47px rgb(83,172,48);
+}
+
+#csftool-wait-widget.wait:after {
+	z-index: 1;
+	animation: csftool-wait-widget-roto 4.1s infinite 2.05s;
+		-o-animation: csftool-wait-widget-roto 4.1s infinite 2.05s;
+		-ms-animation: csftool-wait-widget-roto 4.1s infinite 2.05s;
+		-webkit-animation: csftool-wait-widget-roto 4.1s infinite 2.05s;
+		-moz-animation: csftool-wait-widget-roto 4.1s infinite 2.05s;
+}
+
+#csftool-wait-widget.wait:before {
+	z-index: 2;
+	animation: csftool-wait-widget-roto 4.1s infinite;
+		-o-animation: csftool-wait-widget-roto 4.1s infinite;
+		-ms-animation: csftool-wait-widget-roto 4.1s infinite;
+		-webkit-animation: csftool-wait-widget-roto 4.1s infinite;
+		-moz-animation: csftool-wait-widget-roto 4.1s infinite;
+}
+
+#csftool-wait-widget.nowait:after,
+#csftool-wait-widget.nowait:before {
+	animation: none;
+		-o-animation: none;
+		-ms-animation: none;
+		-webkit-animation: none;
+		-moz-animation: none;
+}
+
+@keyframes csftool-wait-widget-roto {
+	0% { transform: scale(0); opacity: 0; }
+	50% { opacity: 1; }
+	100% { transform: scale(1); opacity: 0; }
+}
+
+@-o-keyframes csftool-wait-widget-roto {
+	0% { -o-transform: scale(0); opacity: 0; }
+	50% { opacity: 1; }
+    100% { -o-transform: scale(1); opacity: 0; }
+}
+
+@-ms-keyframes csftool-wait-widget-roto {
+	0% { -ms-transform: scale(0); opacity: 0; }
+	50% { opacity: 1; }
+	100% { -ms-transform: scale(1); opacity: 0;
+	}
+}
+
+@-webkit-keyframes csftool-wait-widget-roto {
+	0% { -webkit-transform: scale(0); opacity: 0; }
+	50% { opacity: 1; }
+	100% { -webkit-transform: scale(1); opacity: 0; }
+}
+
+@-moz-keyframes csftool-wait-widget-roto {
+	0% { -moz-transform: scale(0); opacity: 0; }
+	50% { opacity: 1; }
+    100% { -moz-transform: scale(1); opacity: 0; }
+}
