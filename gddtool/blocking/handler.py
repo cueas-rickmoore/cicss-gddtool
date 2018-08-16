@@ -1,7 +1,7 @@
 
-from csftool.methods import CsfToolRequestHandlerMethods
+from atmosci.seasonal.factory import BasicSeasonalProjectFactory
 
-from gddapp.project.factory import BaseGDDProjectFactory
+from csftool.methods import CsfToolRequestHandlerMethods
 
 from gddtool.handler import GDDToolRequestHandlerMethods
 
@@ -13,11 +13,11 @@ GDDTOOL_OPTIONS_HANDLER = None
 
 class GDDToolBlockingRequestHandler(GDDToolRequestHandlerMethods,
                                     CsfToolRequestHandlerMethods,
-                                    BaseGDDProjectFactory):
+                                    BasicSeasonalProjectFactory):
 
     def __init__(self, server_config, debug=False, **kwargs):
         # initialize the factory and it's inherited config/registry
-        BaseGDDProjectFactory.__init__(self)
+        BasicSeasonalProjectFactory.__init__(self)
         # server config requirements for CsfToolRequestHandlerMethods
         self.setServerConfig(server_config)
         # cache GDDTool-specific items from server config

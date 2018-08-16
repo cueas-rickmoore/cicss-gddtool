@@ -2,6 +2,7 @@
 import os
 
 from csftool.methods import CsfToolRequestHandlerMethods
+from csftool.blocking.handler import CsfToolOptionsRequestHandler
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -20,25 +21,13 @@ class CsfToolBlockingRequestManager(CsfToolRequestHandlerMethods, object):
 
     def __call__(self, request):
         self.count += 1
-        if self.debug:
+        if self.debug and 'csftool' not in request.uri:
             print "\nCsfToolBlockingRequestManager :: processing request"
             print request
-        if self.log_filepath is not None:
-            log_file = open(os.path.abspath(self.log_filepath),'w')
-            log_file.write('\n')
-            log_file.write(str(request))
-            log_file.close()
 
-        HandlerClass = self.handlerClassForUri(request.uri)
-        if self.debug: print "HandlerClass :", HandlerClass
-        if HandlerClass is not None:
-            handler = self.createHandler(HandlerClass)
-            handler(request)
-        # no handler was found, send invalid request message
-        else:
-            self.handleInvalidRequest(request)
-        # finish request
-        request.finish()
+        if request.method != 'OPTIONS':
+            self.respondToDataRequest(request)
+        else: self.respondToOptionsRequest(request)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -78,13 +67,17 @@ class CsfToolBlockingRequestManager(CsfToolRequestHandlerMethods, object):
 
     def handlerClassSearch(self, resource_group, resource_type, path):
         handlers = self.response_handlers.get(resource_group, None)
-        if self.debug:
+        if self.debug and resource_group != 'csftool':
             print 'handlerClassSearch', resource_group, resource_type, path
         if handlers:
+            resource_path = None
             if isinstance(path, (tuple,list)):
-                resource_path = '/'.join(path)
+                handler = handlers.get(path[-1], None)
+                if handler is not None:
+                    if self.debug: print path[-1], 'handler :', handler
+                    return handler
+                else: resource_path = '/'.join(path)
             else: resource_path = path
-            print resource_path, 'in handlers :', resource_path in handlers
             handler = handlers.get(resource_path, None)
             if handler is None:
                 handler = handlers.get('/%s' % resource_path, None)
@@ -92,17 +85,9 @@ class CsfToolBlockingRequestManager(CsfToolRequestHandlerMethods, object):
                     handler = handlers.get(resource_type, None)
                     if handler is None:
                         handler = handlers.get('file', None)
+            if self.debug: print resource_path, 'handler :', handler
             return handler
         return None
-
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-    def registerResponseHandlers(self, toolname, requests):
-        for key in requests:
-            ResponseHandlerClass = self.response_handlers[key]
-            response_handlers = self.response_handlers[toolname]
-            for request in requests:
-                response_handlers[request] = ResponseHandlerClass
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -124,4 +109,30 @@ class CsfToolBlockingRequestManager(CsfToolRequestHandlerMethods, object):
         if group not in self.response_handlers:
             self.response_handlers[group] = response_handler_classes
         else: self.response_handlers[group].update(response_handler_classes)
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    def respondToDataRequest(self, request):
+        if self.log_filepath is not None:
+            log_file = open(os.path.abspath(self.log_filepath),'w')
+            log_file.write('\n')
+            log_file.write(str(request))
+            log_file.close()
+
+        HandlerClass = self.handlerClassForUri(request.uri)
+        if self.debug: print "HandlerClass :", HandlerClass
+        if HandlerClass is not None:
+            handler = self.createHandler(HandlerClass)
+            handler(request)
+        # no handler was found, send invalid request message
+        else:
+            self.handleInvalidRequest(request)
+        # finish request
+        request.finish()
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    def respondToOptionsRequest(self, request):
+        handler = self.createHandler(CsfToolOptionsRequestHandler)
+        handler(request)
 

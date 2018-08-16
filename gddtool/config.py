@@ -59,17 +59,17 @@ CONFIG.prod.server_port = 20004
 CONFIG.prod.server_url = 'http://tools.climatesmartfarming.org'
 
 CONFIG.demo = ConfigObject('demo', CONFIG)
-CONFIG.demo.dates = { 'fcast_end':'2015-07-10',
-                      'fcast_start':'2015-07-05',
-                      'last_obs':'2015-07-04',
-                      'last_valid':'2015-07-10',
-                      'plant_date':'2015-05-01',
+CONFIG.demo.dates = { 'fcast_end':'2016-07-10',
+                      'fcast_start':'2016-07-05',
+                      'last_obs':'2016-07-04',
+                      'last_valid':'2016-07-10',
+                      'plant_date':'2016-05-01',
                     }
-CONFIG.season = 2015
+CONFIG.demo.season = 2016
 
 CONFIG.dev = ConfigObject('dev', CONFIG)
 CONFIG.dev.dirpaths = { 'project'  :'/Volumes/Transport/data/app_data/gdd',
-                        'resources':'/Volumes/Transport/venvs/gddtool/gddtool_pkg/gddtool/dev-resources',
+                        'resources':'/Volumes/Transport/venvs/gdd/tool_pkg/gddtool/dev-resources',
                         'shared'   :'/Volumes/Transport/data/app_data/shared',
                         'static'   :'/Volumes/Transport/data/app_data/shared/grid/static',
                         'tooldata' :'/Volumes/Transport/data/app_data/gddtool',
@@ -84,7 +84,7 @@ CONFIG.dev.server_url = 'http://localhost:8082'
 
 CONFIG.test = ConfigObject('test', CONFIG)
 CONFIG.test.dirpaths = CONFIG.dev.dirpaths.copy("dirpaths")
-CONFIG.test.dirpaths.resources = '/Volumes/Transport/venvs/gddtool/gddtool_pkg/gddtool/resources'
+CONFIG.test.dirpaths.resources = '/Volumes/Transport/venvs/gdd/tool_pkg/gddtool/resources'
 #CONFIG.test.dirpaths.resources = '/Volumes/Transport/venvs/gddtool/gddtool_pkg/gddtool/dev-resources'
 CONFIG.test.csftool_url = 'http://cyclone.nrcc.cornell.edu:8082/csftool'
 CONFIG.test.gddtool_url = 'http://cyclone.nrcc.cornell.edu:8082/gddtool'
@@ -116,9 +116,10 @@ CONFIG.tool = { 'toolname':'gddtool',       # name forwarding server knows
        'inherit_resources':'csftool',       # key to inherited set or resources
        'data_region_key':'NE',              # region covered by the server
        'data_source_key':'acis',            # source of model data
-       'default_plant_day':[5,1],           # day to begin GDD calculations 
+       'default_plant_day':[3,1],           # day to begin GDD calculations 
        'default_threshold':'50',            # default GDD threshold
-       'first_year':2015,                   # first year with data
+       'first_year':2016,                   # first year with data
+       'season_available':[3,1],            # day that new season is available
        'season_start_day':SEASON_START_DAY, # first day required by tool
        'season_end_day':SEASON_END_DAY,     # last day required by tool
        }
@@ -146,6 +147,7 @@ resource_map = { '/' : ('page', 'file', ('pages','gddtool.html')),
                  'js'      : ('file',  'dir', 'js'),
                  'pages'   : ('page',  'dir', 'pages'),
                  'style'   : ('file',  'dir', 'style'),
+                 'gddtool.html' : ('page',  'dir', 'pages'),
 #                 'toolinit.js' : ('tool', 'dir', 'js'),
 #                 'gddtool.js' : ('tool', 'dir', 'js'),
 #                 'dev-gddtool.js' : ('tool', 'dir', 'js'),
@@ -161,10 +163,10 @@ del resource_map
 CONFIG.request_types = {
         'file' : ( 'display.js', 'gddtool.css', 'interface.js',
                    'load-dependencies.js', 'loadtool.js', 'loadstyles.js',
-                   'toolinit.js', 'wp-style.css' ),
+                   'toolinit.js', 'ui.min.js', 'wp-style.css' ),
         'page' : ( 'gddtool.html', 'dev-gddtool.html', 'test-gddtool.html',
                    'wpdev-gddtool.html', ),
-        'template' : ( 'tool.js', ),
+        'template' : ( 'tool.js', 'tool.min.js' ),
         }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -200,8 +202,10 @@ CONFIG.project.root = 'gddtool'
 CONFIG.project.scopes = { 'normal':(1981,2010),
                           'por':(1981,9999),    # 9999 = year previous to target
                           'recent':(-15,9999) } # -n = number of years previous
-CONFIG.project.start_day = PROJECT_START_DAY
+CONFIG.project.source = 'acis'
+CONFIG.project.shared_forecast = True
 CONFIG.project.shared_source = True
+CONFIG.project.start_day = PROJECT_START_DAY
 CONFIG.project.subproject_by_region = True
 CONFIG.project.threshold_map = {"50":50, "8650":(86,50)}
 

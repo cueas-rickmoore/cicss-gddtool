@@ -67,16 +67,23 @@ var GddChartController = {
 
     // FUNCTIONS
     addSeries: function(data_type, data) {
-        var series = jQuery.extend(true, { data: data}, this.components[data_type]);
+        var series = jQuery.extend(true, { id: data_type, data: data}, this.components[data_type]);
         if (data.length > 0) {
             this.validChart();
             if (this.chart) {
+                var exists = (this.drawn.indexOf(data_type) > -1);
+                if (exists) {
+                    this.remove(data_type);
+                }
                 this.chart.addSeries(series, true);
-                this.drawn.push(data_type);
+                if (this.drawn.indexOf(data_type) < 0) { this.drawn.push(data_type); }
                 if (this.pending_series.length > 0) { this.drawPending(); }
-            } else { this.pending_series.push([data_type, series]); }
+            } else {
+                 this.pending_series.push([data_type, series]);
+            }
         } else { this.drawn.push(data_type); }
-        this.complete(true);
+        this.draw_pending = false;
+        this.complete();
     },
 
     addSeriesType: function(data_type) {
@@ -91,13 +98,15 @@ var GddChartController = {
         if (data !== null) { this.addSeries(data_type, data); }
     },
 
-    allDrawn: function() { return (this.drawn.length == this.series_order.length); },
+    allDrawn: function() { 
+        return (this.drawn.length == this.series_order.length);
+    },
     bind: function(event_type, callback) { this.callback = callback; },
 
     changeGddThreshold: function(threshold) { 
         if (threshold != this.gdd_threshold) {
             this.gdd_threshold = threshold.toString();
-            this.change_pending = true;
+            this.changePending(true);
         }
     },
 
@@ -107,12 +116,19 @@ var GddChartController = {
         } else { address = loc_obj.address.toString(); }
         if (address != this.location) {
             this.location = address
-            this.change_pending = true;
+            this.changePending(true);
         }
     },
 
+    changePending: function(bool) {
+        if (bool == true) { this.change_pending = true; this.drawn = [ ];
+        } else { this.change_pending = false; }
+    },
+
     clear: function() { while( this.chart.series.length > 0 ) { this.chart.series[0].remove(false); } this.drawn = [ ]; },
-    complete: function(reset) { if (this.allDrawn()) { this.execCallback(reset); } },
+    complete: function(reset) {
+        if (this.allDrawn()) { this.execCallback(reset); }
+    },
 
     draw: function() {
         this.drawn = [ ];
@@ -128,6 +144,11 @@ var GddChartController = {
         this.chart.renderer.text(label, 325, 85).css({ color: "#000000", fontSize: "16px"}).add();
     },
 
+    drawErrorLabel: function(season) {
+        var label = season + " Season is not avalaible";
+        this.chart.renderer.text(label, 200, 85).css({ color: "#ff0000", fontSize: "20px"}).add();
+    },
+
     drawPending: function() {
         if (this.pending_series.length > 0) {
             this.validChart();
@@ -137,7 +158,7 @@ var GddChartController = {
                 this.chart.addSeries(series[1], true);
                 if (this.drawn.indexOf(series[0]) < 0) { this.drawn.push(series[0]); }
             }
-            this.complete(true);
+            this.complete();
         }
     },
 
@@ -167,17 +188,34 @@ var GddChartController = {
         config.subtitle.text = this.subtitle();
         jQuery("#gddtool-display-chart").highcharts("Chart", config);
         this.chart = jQuery("#gddtool-display-chart").highcharts();
-        this.drawChartLabel();
+        if (arguments.length == 0) { this.drawChartLabel();
+        } else { this.drawErrorLabel(arguments[0]); }
 
-        this.change_pending = false;
+        this.changePending(false);
         this.drawn = [ ];
         this.pending_series = [ ];
     },
 
     redraw: function() { this.newChart(); this.draw(); },
     refresh: function() { this.clear(); this.draw(); },
-    remove: function() { if (this.chart != null) { this.chart.destroy(); this.chart = null; } },
-    setChartType: function(chart_type) { this.chart_type = chart_type; this.change_pending = true; },
+    remove: function(series_key) {
+        if (this.chart != null) {
+            if (typeof series_key !== 'undefined') {
+                var i;
+                var name = this.components[series_key].name;
+                var num_series = this.chart.series.length;
+                for(i = 0; i < num_series; i++) {
+                    if (this.chart.series[i].name == name) {
+                        this.chart.series[i].remove(); break; 
+                    }
+                }
+            } else {
+                this.chart.destroy(); this.chart = null; this.change_pending = true;
+            }
+        }
+    },
+
+    setChartType: function(chart_type) { this.chart_type = chart_type; this.changePending(true); },
 
     subtitle: function() { return "@ " + this.location; },
     title: function() { return "Cumulative Base " + this.gdd_threshold + " Growing Degree Days"; },
@@ -187,11 +225,7 @@ var GddChartController = {
         if (end_index >= 0) { return end_index } else { return this.tool.dates.indexOf("last_obs"); }
     },
 
-    validChart: function() {
-        if ( this.change_pending || (typeof this.chart === 'undefined') || (this.chart === null) ) {
-            this.newChart();
-        }
-    },
+    validChart: function() { if ( this.change_pending || (typeof this.chart === 'undefined') || (this.chart === null) ) { this.newChart(); } },
 }
 
 var DisplayProxy = function() {
@@ -221,7 +255,7 @@ var DisplayProxy = function() {
         var arg_1 = arguments[1];
         switch(arg_0) {
             case "addSeries": GddChartController.addSeriesType(arg_1); break;
-            case "change_pending": GddChartController.change_pending = arg_1; break;
+            case "change_pending": GddChartController.changePending(arg_1); break;
             case "chart": case "chart_type": GddChartController.setChartType(arg_1); break;
             case "default": GddChartController.default_chart = arg_1; break;
             case "gdd_threshold": GddChartController.changeGddThreshold(arg_1); break;
@@ -232,6 +266,7 @@ var DisplayProxy = function() {
             case "options": jQuery.each(arg_1, function(key, value) { DisplayProxy(key, value) }); break;
             case "plant_date": GddChartController.plant_date = arg_1; break;
             case "season": GddChartController.season = arg_1; break;
+            case "show_error": GddChartController.newChart(arg_1); break;
             case "tool": GddChartController.tool = arg_1; break;
             case "width": GddChartController.chart_config.chart["width"] = arg_1; break;
         } // end of 2 argument switch

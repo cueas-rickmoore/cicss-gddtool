@@ -7,12 +7,19 @@ from atmosci.seasonal.methods.access import BasicFileAccessorMethods
 from atmosci.utils.config import ConfigObject
 from atmosci.utils.timeutils import daysInYear
 
+from gddtool.history import GDDToolHistoryDataReader, \
+                            GDDToolHistoryDataManager, \
+                            GDDToolHistoryFileBuilder
+
+from gddtool.target import GDDToolTargetYearReader, \
+                           GDDToolTargetYearManager, \
+                           GDDToolTargetYearBuilder
+
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-from gddapp.registry import REGISTRY
-
 from gddtool.config import CONFIG
+from gddtool.registry import REGISTRY
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -175,9 +182,6 @@ class GDDToolHistoryFactory(GDDToolFactoryMethods, BasicFileAccessorMethods,
     # - - - # - - - # - - - # - - - # - - - # - - - # - - - # - - - # - - - #
 
     def _registerAccessClasses(self):
-        from gddtool.history import GDDToolHistoryDataReader, \
-                                    GDDToolHistoryDataManager, \
-                                    GDDToolHistoryFileBuilder
         self._registerAccessManagers('history', GDDToolHistoryDataReader,
                                                 GDDToolHistoryDataManager,
                                                 GDDToolHistoryFileBuilder)
@@ -247,10 +251,6 @@ class GDDToolTargetYearFactory(GDDToolFactoryMethods, BasicFileAccessorMethods,
     # - - - # - - - # - - - # - - - # - - - # - - - # - - - # - - - # - - - #
 
     def _registerAccessClasses(self):
-        from gddtool.target import GDDToolTargetYearReader, \
-                                   GDDToolTargetYearManager, \
-                                   GDDToolTargetYearBuilder
-
         self._registerAccessManagers('target', GDDToolTargetYearReader,
                                                GDDToolTargetYearManager,
                                                GDDToolTargetYearBuilder)

@@ -6,6 +6,7 @@ from tornado.httputil import HTTPHeaders, ResponseStartLine
 from atmosci.utils.timeutils import asDatetimeDate, DateIterator, elapsedTime
 
 from csftool.blocking.handler import CsfToolRequestHandlerMethods
+from csftool.utils import validateSeasonDates
 
 from gddtool.factory import GDDToolHistoryFactory, GDDToolTargetYearFactory
 from gddtool.handler import GDDToolRequestHandlerMethods
@@ -182,7 +183,7 @@ class GDDToolTargetYearDataHandler(GDDToolTargetYearFactory,
         # GDD threshold and target_year
         gdd_threshold = str(request_dict['gdd_threshold'])
         target_year = request_dict.get('season', None)
-        if target_year is None: target_year = datetime.date.today().year
+        if target_year is None: target_year = self.maxAvailableYear()
 
         # get the configured season limits
         dates = self.extractSeasonDates(request_dict, target_year)
@@ -207,26 +208,12 @@ class GDDToolTargetYearDataHandler(GDDToolTargetYearFactory,
         and target_year == self.mode_config.season:
             dates.update(self.mode_config.dates.attrs)
         else: dates.update(reader.getSignificantDates(dataset_path))
-        season_end = dates['season_end']
-        end_date = asDatetimeDate(season_end)
-        start_date = asDatetimeDate(dates['season_start'])
-        if 'fcast_start' in dates:
-            fcast_start = asDatetimeDate(dates['fcast_start'])
-            if fcast_start > end_date: del dates['fcast_start']
-        if 'fcast_end' in dates:
-            fcast_end = asDatetimeDate(dates['fcast_end'])
-            if fcast_end > end_date:
-                if 'fcast_start' in dates: dates['fcast_end'] = season_end
-                else: del dates['fcast_end']
-        last_obs = asDatetimeDate(dates['last_obs'])
-        if last_obs > end_date: dates['last_obs'] = season_end
-        last_valid = asDatetimeDate(dates['last_valid'])
-        if last_valid > end_date:
-            dates['last_valid'] = season_end
-            last_valid = asDatetimeDate(season_end)
-
+        # make sure that all dates from the files, etc. are kosher
+        dates = validateSeasonDates(dates)
         # temporarily free up the POR file
         reader.close()
+        start_date = asDatetimeDate(dates['season_start'])
+        last_valid = asDatetimeDate(dates['season_end'])
 
         # add season dates to response
         response_json = \
@@ -236,8 +223,10 @@ class GDDToolTargetYearDataHandler(GDDToolTargetYearFactory,
         # get the accumulated GDD for Y axis of data plots
         reader.open()
         response_json = '%s,"data":{"season":%s}}}' % (response_json, 
-                        self.serializeData(reader.getDataAtNode(dataset_path,
-                                           lon, lat, start_date, last_valid)))
+                        self.serializeData(
+                            reader.getDataAtNode(dataset_path, lon, lat, 
+                                start_date, last_valid
+                                           )))
         reader.close()
         if self.mode in ('dev','test'):
             print 'season data retrieved in ', elapsedTime(start_response,True)

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<script type="text/javascript" src="file://localhost/Volumes/Transport/venvs/csftool/csftool_pkg/csftool/resources/js/jquery-1.11.3-min.js"></script>
+<script type="text/javascript" src="file://localhost/Volumes/Transport/venvs/csftool/csftool_pkg/csftool/resources/js/jquery-ui-1.11.4-min.js"></script>
+
+<link rel="stylesheet" type="text/css" href="file://localhost/Volumes/Transport/venvs/csftool/csftool_pkg/csftool/dev-resources/style/csftool.css">
+<link rel="stylesheet" type="text/css" href="file://localhost/Volumes/Transport/venvs/csftool/csftool_pkg/csftool/dev-resources/style/csftool-jquery-ui.css">
+<link rel="stylesheet" type="text/css" href="file://localhost/Volumes/Transport/venvs/csftool/csftool_pkg/csftool/dev-resources/style/csftool-spinner.css">
+<link rel="stylesheet" type="text/css" href="file://localhost/Volumes/Transport/venvs/csftool/csftool_pkg/csftool/dev-resources/js/spinner-dialog.js">
+
+<script>
+SPINNER = null;
+</script>
+</head>
+
+<body>
+<div id="csftool-content" style="width:1000px; height:800px;">
+    <div id="test-spinner-dialog"> </div>
+    <div>
+        <button id="open-button"></button>
+        <button id="close-button"></button>
+    </div>
+
+</div>
+
+<script>
+    jQuery(document).ready( function () {
+        console.log("the document is ready");
+
+        jQuery("#close-button").button( { label: "close spinner dialog", } );
+        jQuery("#close-button").click(function() {
+            console.log("close spinner dialog button was clicked");
+            SPINNER.close();
+        });
+
+        jQuery("#open-button").button( { label: "open spinner dialog", } );
+        jQuery("#open-button").click(function() {
+            console.log("open spinner dialog button was clicked");
+            SPINNER.open();
+        });
+
+        SPINNER = jQuery("#test-spinner-dialog").CsfToolSpinnerDialog();
+        console.log(SPINNER);
+    });
+</script>
+</body>
+</html>
+

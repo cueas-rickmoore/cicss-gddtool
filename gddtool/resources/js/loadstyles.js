@@ -28,7 +28,7 @@ function loadGDDToolStyles() {
     dependency = document.createElement('link');
     dependency.setAttribute("rel","stylesheet");
     dependency.setAttribute("type","text/css");
-    dependency.setAttribute("href", csftool_url + "/style/location-dialog.css");
+    dependency.setAttribute("href", csftool_url + "/style/location-dialog-2.0.css");
     element.append(dependency);
 
     dependency = document.createElement('link');

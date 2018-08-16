@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>CSF Tool Interface Plugins</title>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="toolname" content="csftool">
+<meta name="toolserver" content="file://localhost/Volumes/Transport/venvs/csftool/csftool_pkg/csftool/resources">
+<style>
+    html { height: 100%; }
+    body { width: 1024px; height: 768px; }
+</style>
+
+<script type="text/javascript" src="https://maps.google.com/maps/api/js?key=AIzaSyDv5pQYe9kRbolVUt0o8XSXSQl4g8BHrrQ"></script>
+
+<script type="text/javascript" src="file://localhost/Volumes/Transport/venvs/csftool/csftool_pkg/csftool/resources/js/jquery-1.11.3-min.js"></script>
+<script type="text/javascript" src="file://localhost/Volumes/Transport/venvs/csftool/csftool_pkg/csftool/resources/js/jquery-ui-1.11.4-min.js"></script>
+<script type="text/javascript" src="file://localhost/Volumes/Transport/venvs/csftool/csftool_pkg/csftool/dev-resources/js/location-dialog.js"></script>
+<script type="text/javascript" src="file://localhost/Volumes/Transport/venvs/csftool/csftool_pkg/csftool/dev-resources/js/csftool-ui-plugin.js"></script>
+
+<link rel="stylesheet" type="text/css" href="file://localhost/Volumes/Transport/venvs/csftool/csftool_pkg/csftool/dev-resources/style/csftool-jquery-ui.css">
+<link rel="stylesheet" type="text/css" href="file://localhost/Volumes/Transport/venvs/csftool/csftool_pkg/csftool/dev-resources/style/csftool-ui-plugin.css">
+<link rel="stylesheet" type="text/css" href="file://localhost/Volumes/Transport/venvs/csftool/csftool_pkg/csftool/dev-resources/style/location-dialog.css">
+<link rel="stylesheet" type="text/css" href="file://localhost/Volumes/Transport/venvs/csftool/csftool_pkg/csftool/dev-resources/style/csftool.css">
+
+<script>
+jQuery = $;
+TOOL_UI = null;
+</script>
+
+</head>
+<body>
+  <div id="inner-content">
+    <div id="csftool-content">
+      <div id="csftool-input"> </div>
+      <div id="csftool-display"> </div>
+      <div id="csftool-location-dialog" title="Select a new location"></div>
+    </div>
+  </div>
+  <script>
+  jQuery(document).ready( function () {
+        console.log("the document is ready");
+        TOOL_UI = jQuery("#csftool-input").CsfToolUserInterfacePlugin( [
+            { resource_url: "file://localhost/Volumes/Transport/venvs/csftool/csftool_pkg/csftool/resources" },
+            { sources: [ { key: 'one', description: "Source One" }, { key: 'two', description: "Sorce Two" }, { key: 'three', description: "Source Three" } ] },
+            [ "default", "source", "two" ],
+            ] );
+
+        TOOL_UI("start_date", "2016-01-01");
+
+        TOOL_UI("bind", "dataSourceChanged", function(ev, data_source) {
+            console.log("CALLBACK :: ui.dataSourceChanged executed : " + data_source.description);
+        });
+
+        var options = { width:600, height:500 };
+        jQuery("#csftool-location-dialog").CsfToolLocationDialog(options);
+        MAP_DIALOG = jQuery("#csftool-location-dialog").CsfToolLocationDialog();
+        MAP_DIALOG("google", google);
+        MAP_DIALOG("bind", "close", function(ev, context) { 
+            console.log("EVENT :: LocationDialog closed");
+            jQuery.each(context, function(key, value) { console.log("    ATTRIBUTE " + key + " = " + value); });
+            if (context.selected_location != context.initial_location) {
+                console.log("Selected location changed from " + context.initial_location.address + " to " + context.selected_location.address);
+                var loc_obj = context.selected_location;
+                TOOL_UI("location", loc_obj);
+            }
+        });
+
+        TOOL_UI("bind", "locationChangeRequest", function(ev, loc_obj) {
+            console.log(".........");
+            console.log("CALLBACK :: ui.locationChangeRequest received : old is " + loc_obj.address);
+            MAP_DIALOG("open", loc_obj);
+        });
+  });
+  </script>
+</body>
+</html>
+

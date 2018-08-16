@@ -39,6 +39,8 @@ class GDDToolBlockingPageHandler(GDDToolBlockingRequestHandler):
         parameter_dict = self.extractTemplateParameters(request_dict)
         content = template.generate(csf_server_url=self.getHostUrl(request),
                                     **parameter_dict)
+        #print "\n\nrequest for", request.uri
+        #print content, '\n\n'
 
         request.write(self.constructResponse(content.replace('&quot;','"')))
 
@@ -58,6 +60,8 @@ class GDDToolBlockingPageHandler(GDDToolBlockingRequestHandler):
 
 GDDTOOL_FILE_HANDLERS['/'] = GDDToolBlockingPageHandler
 GDDTOOL_FILE_HANDLERS['page'] = GDDToolBlockingPageHandler
+GDDTOOL_FILE_HANDLERS['/gddtool'] = GDDToolBlockingPageHandler
+GDDTOOL_FILE_HANDLERS['/gddtool/'] = GDDToolBlockingPageHandler
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -69,17 +73,17 @@ class GDDToolBlockingTemplateHandler(GDDToolBlockingPageHandler):
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def extractTemplateParameters(self, request_dict):
+        max_available_year = self.maxAvailableYear()
         # start with dates of current season 
         parameter_dict = self.extractSeasonParameters(request_dict)
         parameter_dict['season_start_day'] = list(self.tool.season_start_day)
         parameter_dict['season_end_day'] = list(self.tool.season_end_day)
-        year = parameter_dict['season']
-        if year is not None: year = int(year)
-        else: year = datetime.date.today().year
-        parameter_dict['season'] = year
+        year = parameter_dict.get('season', None)
+        if year is not None: parameter_dict['season'] = int(year)
+        else: parameter_dict['season'] = max_available_year
 
-        urls = GDDToolBlockingPageHandler.extractTemplateParameters(self,
-                                              request_dict)
+        urls = \
+        GDDToolBlockingPageHandler.extractTemplateParameters(self,request_dict)
         parameter_dict.update(urls)
 
         # add plant date
@@ -92,7 +96,7 @@ class GDDToolBlockingTemplateHandler(GDDToolBlockingPageHandler):
 
         # check for multiple years ... always a sequence
         parameter_dict['min_year'] = self.tool.first_year
-        parameter_dict['max_year'] = datetime.date.today().year
+        parameter_dict['max_year'] = max_available_year
 
         # add GDD threshold
         parameter_dict['gdd_threshold'] = \

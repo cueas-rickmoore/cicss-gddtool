@@ -1,0 +1,45 @@
+manage-local-storage README. See commented functions in manage-local-storage.js for more info.
+
+1. basil.min.js and manage-local-storage.js must be loaded before the plugin can be used
+
+2. basil options must be defined. namespace must be defined explicitly (defaults to null and error is triggered if not defined).
+// A namespace of 'CSF-LOC-'+CSFTOOL_NAME was used in the previous version for all tools, and recommended for continuity.
+var storage_options = {
+    namespace: 'CSF-LOC-'+CSFTOOL_NAME,
+    expireDays: 3650
+}
+
+3. initialize the storage manager
+jQuery().CsfToolManageLocalStorage(storage_options);
+var manage_local_storage = jQuery().CsfToolManageLocalStorage();
+YOUR_GLOBAL_VARS.manage_local_storage = manage_local_storage
+YOUR_GLOBAL_VARS.manage_local_storage("init");
+
+4. Perform a variety of tasks using the plugin.
+
+Some examples:
+
+// GET CURRENT SELECTED ID
+id = YOUR_GLOBAL_VARS.manage_local_storage("selected_id");
+
+// GET CURRENT SELECTED LOCATION
+loc_obj = YOUR_GLOBAL_VARS.manage_local_storage("selected_loc");
+
+// READ : read all saved locations for this tool into variable
+var locations = YOUR_GLOBAL_VARS.manage_local_storage("read");
+
+// WRITE : write all locations that user has saved/selected into storage
+// Each location can include any number of key-value pairs, depending on the tool. Location picker will ignore extra data.
+YOUR_GLOBAL_VARS.manage_local_storage("write", YOUR_GLOBAL_VARS.locations, selectedID);
+
+// WRITE : enter a single key-value pair for one location
+// Handy for changes in the tool UI variables.
+YOUR_GLOBAL_VARS.manage_local_storage("write",YOUR_GLOBAL_VARS.location_id,{"soilcapacity":YOUR_GLOBAL_VARS.soilcapacity},300);
+
+// DELETE : remove the locations user has deleted
+// a) get ids to delete (finds the saved IDs that are not currently in the locations received from the location picker).
+var idsToDelete = YOUR_GLOBAL_VARS.manage_local_storage("getIdsToDelete", context.all_locations);
+// b) delete the IDs that the user no longer wants
+YOUR_GLOBAL_VARS.manage_local_storage("delete", idsToDelete);
+
+

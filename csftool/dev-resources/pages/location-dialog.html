@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<script type="text/javascript" src="https://maps.google.com/maps/api/js?key=AIzaSyDv5pQYe9kRbolVUt0o8XSXSQl4g8BHrrQ"></script>
+
+<script type="text/javascript" src="file://localhost/Volumes/Transport/venvs/csftool/csftool_pkg/csftool/resources/js/jquery-1.11.3-min.js"></script>
+<script type="text/javascript" src="file://localhost/Volumes/Transport/venvs/csftool/csftool_pkg/csftool/resources/js/jquery-ui-1.11.4-min.js"></script>
+<script type="text/javascript" src="file://localhost/Volumes/Transport/venvs/csftool/csftool_pkg/csftool/resources/js/location-dialog.js"></script>
+
+<link rel="stylesheet" type="text/css" href="file://localhost/Volumes/Transport/venvs/csftool/csftool_pkg/csftool/resources/style/location-dialog.css">
+<link rel="stylesheet" type="text/css" href="file://localhost/Volumes/Transport/venvs/csftool/csftool_pkg/csftool/resources/style/dev-csftool-jquery-ui.css">
+
+<script>
+MAP_DIALOG = null;
+function changeDialogSize(index) {
+    var dimensions = [ { width:400 , height:400 },
+                       { width:500 , height:400 },
+                       { width:600 , height:500 },
+                       { width:750 , height:500 },
+                     ];
+    MAP_DIALOG("dimensions", dimensions[Number(index)]);
+    MAP_DIALOG("open");
+}
+</script>
+</head>
+
+<body>
+<div id="csftool-content" style="width:1000px; height:800px;">
+    <div> <input type="button" id="show-dialog" value="show the dialog"> </div>
+    <div>&nbsp;</div>
+    <div>&nbsp;</div>
+    <div>
+    <form id="change-size"><span class="csftool-em">Dialog Size (widht x height)</span><br/>
+    <input type="radio" name="dialog-size" value="0"></input>400x400 (default)<br/>
+    <input type="radio" name="dialog-size" value="1"></input>500x400<br/>
+    <input type="radio" name="dialog-size" value="2"></input>600x500<br/>
+    <input type="radio" name="dialog-size" value="3"></input>750x500
+    </form>
+    </div>
+    <div id="test-location-dialog">
+    </div>
+</div>
+
+<script>
+    console.log("about to set document ready function");
+    jQuery(document).ready( function () {
+        console.log("the document is ready");
+        MAP_DIALOG = jQuery("#test-location-dialog").CsfToolLocationDialog();
+        console.log(MAP_DIALOG);
+
+        MAP_DIALOG("location",
+               { name:"default",description:"Cornell University, Ithaca, NY", lat:42.45, lng:-76.48});
+
+        jQuery("#show-dialog").click(function() {
+            console.log("show dialog button was clicked");
+            //jQuery("#test-location-dialog").CsfToolLocationDialog("open");
+            MAP_DIALOG("open");
+        });
+
+        jQuery("#change-size input").on("change", function() {
+            console.log("clicked button to change dialog size");
+            var button = jQuery('input[name="dialog-size"]:checked', '#change-size').val();
+            changeDialogSize(button);
+        });
+    });
+</script>
+</body>
+</html>
+

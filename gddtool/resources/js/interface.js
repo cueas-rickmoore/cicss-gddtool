@@ -9,7 +9,9 @@ var dateToDateObject = function(date_value) {
     } else { return new Date(date_value+'T12:00:00-04:30'); }
 }
 
-var logObjectAttrs = function(obj) { jQuery.each(obj, function(key, value) { console.log("    ATTRIBUTE " + key + " = " + value); }); }
+var logObjectAttrs = function(obj) {
+    jQuery.each(obj, function(key, value) { console.log("    ATTRIBUTE " + key + " = " + value); });
+}
 
 var ChartTypeInterface = {
     active: true,
@@ -19,7 +21,8 @@ var ChartTypeInterface = {
 
     chartType: function(chart_type) { if (this.active) { return jQuery("#gddtool-toggle-button").val(); } else { return "season"; } },
     execCallback: function(chart_type) { if (this.callback) { this.callback("chartChangeRequest", chart_type); } },
-    hideChartSelector: function() { jQuery("#gddtool-toggle-display").hide(); jQuery("#gddtool-no-toggle-text").show(); },
+    hideChartSelector: function() { jQuery("#gddtool-toggle-display").hide(); },
+    hideChartMsg: function(reason) { jQuery("#gddtool-"+ reason +"-text").hide(); },
 
     init: function() {
         var init_chart = this.default_chart;
@@ -48,7 +51,12 @@ var ChartTypeInterface = {
         }
     },
 
-    showChartSelector: function() { jQuery("#gddtool-toggle-display").show(); jQuery("#gddtool-no-toggle-text").hide(); },
+    showChartSelector: function() {
+        jQuery("#gddtool-season-over-text").hide();
+        jQuery("#gddtool-plant-late-text").hide();
+        jQuery("#gddtool-toggle-display").show();
+    },
+    showChartMsg: function(reason) { jQuery("#gddtool-"+ reason +"-text").show(); },
 
     toggleChart: function() {
         if (jQuery("#gddtool-toggle-button").hasClass("trend")) {
@@ -100,9 +108,9 @@ var DateInterface = {
             changeYear: this.show_years,
             dateFormat: this.date_format,
 			gotoCurrent: true,
-            //onChangeMonthYear: function(year, month, datepicker) {
-            //    console.log("datepicker.onChangeMonthYear : " + DateInterface.start_date.getFullYear() + " : " + year);
-            //},
+            onChangeMonthYear: function(year, month, datepicker) {
+                console.log("datepicker.onChangeMonthYear : " + DateInterface.start_date.getFullYear() + " : " + year);
+            },
             onSelect: function(date_text, datepicker) {
                 DateInterface.start_date = dateToDateObject(date_text);
                 DateInterface.execCallback('plantDateChanged', date_text);
@@ -125,7 +133,9 @@ var DateInterface = {
         jQuery(this.anchor).datepicker(options);
         this.initialized = true;
         jQuery(this.datepicker).hide();
-        jQuery("#gddtool-datepicker").change(function () { DateInterface.execCallback("plantDateChanged", this.value); });
+        jQuery("#gddtool-datepicker").change(function () {
+            DateInterface.execCallback("plantDateChanged", this.value);
+        });
         jQuery("#ui-datepicker-div .ui-datepicker-header .ui-datepicker-title .ui-datepicker-year").change(
                function () { console.log("#ui-datepicker-year.change :: " + this.value);
                              //DateInterface.execCallback("yearChanged", this.value);
@@ -206,6 +216,7 @@ var LocationInterface = {
         if (typeof callback !== 'undefined') {
             var loc_obj = loc_arg;
             if (typeof loc_arg === 'undefined') { loc_obj = this.location(); }
+                logObjectAttrs(loc_obj);
             callback(ev, loc_obj);
             return true;
         } else { return false; }
@@ -215,7 +226,9 @@ var LocationInterface = {
         if (this.current) { this.setLocation(this.current);
         } else { this.setLocation(this.default); }
         jQuery("#gddtool-change-location").button( { label: "Change Location", } );
-        jQuery("#gddtool-change-location").click(function() { LocationInterface.execCallback("locationChangeRequest"); });
+        jQuery("#gddtool-change-location").click(function() {
+               LocationInterface.execCallback("locationChangeRequest");
+        });
     },
 
     location: function() { return jQuery.extend({}, this.current); },
@@ -228,8 +241,9 @@ var LocationInterface = {
 
     setCallback: function (key, callback) { this.callbacks[key] = callback; },
 
-
     setLocation: function(loc_obj) {
+        logObjectAttrs(loc_obj);
+
         var span = '<span class="gddtool-location-address">{{ address }}</span>'
         var changed = false;
 
@@ -245,10 +259,12 @@ var LocationInterface = {
             } else { address = span.replace("{{ address }}", address); }
 
             jQuery("#gddtool-current-address").empty().append(address);
-            jQuery("#gddtool-current-lat").empty().append(loc_obj.lat.toFixed(6));
-            jQuery("#gddtool-current-lng").empty().append(loc_obj.lng.toFixed(6));
+            //jQuery("#gddtool-current-lat").empty().append(loc_obj.lat.toFixed(6));
+            //jQuery("#gddtool-current-lng").empty().append(loc_obj.lng.toFixed(6));
 
-            if (this.current != null) { this.execCallback("locationChanged", jQuery.extend({}, loc_obj)); }
+            if (this.current != null) {
+                this.execCallback("locationChanged", jQuery.extend({}, loc_obj));
+            }
             this.current = jQuery.extend({}, loc_obj);
 
         } else if (loc_obj.key != this.current.key) {
@@ -262,8 +278,6 @@ var InterfaceManager = {
     dom: ['<div id="gddtool-location">',
           '<span class="csftool-em">Current Location :</span>',
           '<div id="gddtool-current-address"><span class="gddtool-location-address"> </span></div>',
-          '<span class="csftool-em">Latitude : </span><span id="gddtool-current-lat"> </span>',
-          '<br/><span class="csftool-em">Longitude : </span><span id="gddtool-current-lng"> </span>',
           '<button id="gddtool-change-location"></button>',
           '</div>',
           '<div id="gddtool-plant-date">',
@@ -279,7 +293,8 @@ var InterfaceManager = {
           '</form>',
           '</div>',
           '<div id="gddtool-chart-button">',
-          '<p id="gddtool-no-toggle-text">Growing season is over.</p>',
+          '<p id="gddtool-season-over-text">Growing season is over.</p>',
+          '<p id="gddtool-plant-late-text">Plant date is after latest avaliable forecast.</p>',
           '<div id="gddtool-toggle-display">',
           '<button id="gddtool-toggle-button"></button>',
           '</div>',
@@ -290,6 +305,7 @@ var InterfaceManager = {
     init: function(dom_element) {
         //document.getElementById('csftool-input').innerHTML = this.dom;
         dom_element.innerHTML = this.dom;
+
         LocationInterface.init();
         DateInterface.init(this.initial_date);
         GddThresholdInterface.init();
@@ -339,9 +355,11 @@ var jQueryInterfaceProxy = function() {
             case "chart": ChartTypeInterface.setChartType(arg_1); break;
             case "chart_types": ChartTypeInterface.setChartTypes(arg_1); break;
             case "date_range": DateInterface.setDateRange(arg_1[0], arg_1[1]); break;
+            case "hide_chart_msg": ChartTypeInterface.hideChartMsg(arg_1); break;
             case "initial_date": InterfaceManager.initial_date = dateToDateObject(arg_1); break;
             case "location": LocationInterface.setLocation(arg_1); break;
             case "plant_date": DateInterface.setStartDate(arg_1); break;
+            case "show_chart_msg": ChartTypeInterface.showChartMsg(arg_1); break;
             case "year_range": DateInterface.setYearRange(arg_1[0], arg_1[1]); break;
         } // end of 2 argument switch
 

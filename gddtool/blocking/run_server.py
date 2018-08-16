@@ -20,30 +20,52 @@ from gddtool.blocking.files import GDDTOOL_FILE_HANDLERS
 
 from optparse import OptionParser
 parser = OptionParser()
+
+parser.add_option('--demo', action='store_true', default=False, dest='demo_mode',
+                  help='use demo mode for predetermined locations and test data')
 parser.add_option('--log', action='store', type='string', default=None,
-                  dest='log_filepath')
+                  dest='log_filepath',
+                  help='specify path for Tornado log file')
 parser.add_option('--page', action='store', type='string', default=None,
-                  dest='tool_page')
+                  dest='tool_page', help='optional home page url')
+parser.add_option('--pkg', action='store', type='string', default=None,
+                  dest='pkg_dirpath',
+                  help='alternate path to Grape Hardiness package directory')
 parser.add_option('--plant_day', action='store', type='string', default=None,
-                  dest='plant_day')
+                  dest='plant_day',
+                  help="alternative default plant day, must be a string 'MM-DD'")
 parser.add_option('--port', action='store', type='int', default=None,
-                  dest='server_port')
+                  dest='server_port', help='alternate port for server')
+parser.add_option('--region', action='store', type='string', default=None,
+                  dest='region_key', help='name of alternate geographic region')
+parser.add_option('--source', action='store', type='string', default=None,
+                  dest='source_key', help='name of alternate data source')
 parser.add_option('--tool', action='store', type='string', default=None,
-                  dest='toolname')
+                  dest='toolname', help='alternate name for tool in requests')
 
-parser.add_option('-c', action='store_true', default=False, dest='csftool')
-parser.add_option('-d', action='store_true', default=False, dest='demo_mode')
-parser.add_option('-p', action='store_true', default=False, dest='prod_mode')
-parser.add_option('-t', action='store_true', default=False, dest='test_mode')
-parser.add_option('-w', action='store_true', default=False, dest='wpdev_mode')
+parser.add_option('-c', action='store_true', default=False, dest='csftool',
+                  help='also serve csftool requests from this server')
+parser.add_option('-d', action='store_true', default=False,
+                  dest='dev_resources', help='use dev resource in test mode')
+parser.add_option('-p', action='store_true', default=False, dest='prod_mode',
+                  help='run server with production settings')
+parser.add_option('-r', action='store_true', default=False,
+                  dest='prod_resources',
+                  help='use preduction resources in dev mode')
+parser.add_option('-t', action='store_true', default=False, dest='test_mode',
+                  help='run server with test settings')
+parser.add_option('-v', action='store_true', default=False, dest='verbose',
+                  help='show verbose comments & output as code is executed')
+parser.add_option('-w', action='store_true', default=False, dest='wpdev_mode',
+                  help='use WordPress jQuery scripts in dev mode')
+parser.add_option('-z', action='store_true', default=False, dest='debug',
+                  help='show all verbose and debug output as code is executed')
 
-parser.add_option('-z', action='store_true', default=False, dest='debug')
 options, args = parser.parse_args()
 
 debug = options.debug
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
 
 # allow for specialized alternate tool configurations
 if options.prod_mode: mode = "prod"
@@ -62,6 +84,30 @@ mode_config = server_config[mode]
 server_config.mode = mode
 server_config.update(mode_config.attrs)
 server_config.dirpaths = mode_config.dirpaths.attrs
+
+if (mode == "dev" and options.prod_resources):
+    print "USING PROD RESOURCES IN DEV MODE"
+    resources = server_config.dirpaths.resources.replace('dev-','')
+    print resources
+    server_config.dirpaths.resources = resources
+
+elif (mode == "test" and options.dev_resources):
+    print "USING DEV RESOURCES IN TEST MODE"
+    server_config.dirpaths.resources = server_config.modes.dev.dirpaths.resources
+    print server_config.dirpaths.resources
+
+new_port = options.server_port
+if new_port is not None:
+    old_port_str = str(server_config.server_port)
+    server_config.server_port = new_port
+    new_port_str = str(new_port)
+    url = server_config.server_url
+    server_config.server_url = url.replace(old_port_str, new_port_str)
+    url = server_config.csftool_url
+    server_config.csftool_url = url.replace(old_port_str, new_port_str)
+    url = server_config.gddtool_url
+    server_config.gddtool_url = url.replace(old_port_str, new_port_str)
+
 # validate the resources and get full path to each
 server_config.resources = \
     { 'gddtool': validateResourceConfiguration(server_config, debug), }
@@ -134,8 +180,10 @@ if include_csftool:
     csftool_requests = csftool_config.get('file_requests', None)
     del CSF_TOOL_CONFIG
     # validate the resources and get full path to each
+    gdd_path = 'gdd/tool_pkg/gddtool'
+    csf_path = 'csftool/csftool_pkg/csftool'
     csftool_config.dirpaths.resources = \
-        server_config.dirpaths.resources.replace('gddtool','csftool')
+        server_config.dirpaths.resources.replace(gdd_path,csf_path)
     server_config.resources.csftool = \
         validateResourceConfiguration(csftool_config, debug)
     del csftool_config

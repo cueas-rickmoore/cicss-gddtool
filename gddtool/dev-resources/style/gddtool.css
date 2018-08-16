@@ -1,0 +1,106 @@
+@media screen {
+
+    #gddtool-location {
+        width: 100%;
+        margin: 1em 0 0 0;
+        padding: 0 0 0 5px;
+        font-size: 0.9em;
+        line-height: 1.25;
+        color: #000000;
+        }
+    span.gddtool-location-address {
+        color: #45930b;
+        padding: 0 0 0 10px;
+    }
+    #gddtool-current-lat,
+    #gddtool-current-lng {
+        color: #45930b;
+        padding: 0 0 0 5px;
+    }
+    #gddtool-location .ui-button {
+        margin: 5px auto;
+        display: block;
+    }
+
+    #gddtool-plant-date {
+        width: 100%;
+        margin: 35px 0 0 0;
+        padding: 0 0 0 5px;
+        font-size: 1em;
+        line-height: 1.25;
+        color: #000000;
+    }
+
+    #gddtool-date-selector {
+        width: 100%;
+        margin: 0 0 0 0;
+    }
+    #gddtool-date-selector input[type="text"] {
+        font-size: 1em;
+        max-width: 16em;
+        padding: 0 12px 0 3px;
+    }
+    #gddtool-date-selector input[type="text"]:active,
+    #gddtool-date-selector input[type="text"]:focus {
+        font-size: 1em;
+        background-color: #f7f8fa;
+        border: 1px solid #00bb00;
+    }
+
+    #gddtool-thresholds {
+        font-size: 1em;
+        width: 100%;
+        margin: 35px 0 0 0;
+        padding: 0 0 0 5px;
+        line-height: 1.25;
+        color: #000000;
+    }
+
+    #gddtool-chart-button {
+        margin: 35px auto;
+        width: 100%;
+    }
+    #gddtool-toggle-display .ui-button {
+        display: block;
+        margin: auto;
+    }
+    #gddtool-toggle-display .ui-button-text-only .ui-button-text {
+        padding: .2em;
+    }
+    #gddtool-plant-late-text {
+        display: none;
+        padding: 0 0 0 5px;
+        font-size: 0.9em;
+        font-weight: bold;
+        color: #ff0000;
+    }
+    #gddtool-season-over-text {
+        display: none;
+        padding: 0 0 0 5px;
+        font-size: 1.0em;
+        font-weight: bold;
+        color: #ff0000;
+    }
+
+    /* display panel */
+    #csftool-display {
+        line-height: 1em;
+    }
+
+    #gddtool-display-chart {
+        position: relative;
+        left: 0; top: 0; 
+        height: 460px;
+        width: 700px;
+        margin: 0 0 0 0;
+        text-align: center;
+    }
+    #gddtool-display-msg {
+        font-size: 0.9em;
+        width: 100%;
+        margin: 0 4px 0 4px;
+        text-align: center;
+        /* border-top: 2px solid #3baae3; */
+    }
+/* end of gddtool screen styling */
+}
