@@ -53,10 +53,10 @@ GDDTOOL = {
     adjustTimeZone: function(date_value) { return new Date(date_value.toISOString().split('T')[0]+'T12:00:00-04:30'); },
 
     climateNorms: function(chart_type) {
-        var indexes;
-        if (chart_type == "trend") { indexes = this.dates.recentTrendIndexes();
-        } else { indexes = this.dates.seasonOutlookIndexes(); }
-        return this.genDataPairs("normal", indexes[0], indexes[1], indexes[0]);
+        var end, start;
+        if (chart_type == "trend") { [start, end] = this.dates.recentTrendIndexes();
+        } else { [start, end] = this.dates.seasonOutlookIndexes(); }
+        return this.genDataPairs("normal", start, end, start)
     },
 
     dataChanged: function(data_type) { if (this.wait_widget.is_active) { this.wait_widget.dataReady(data_type); } },
@@ -75,10 +75,9 @@ GDDTOOL = {
     },
 
     forecast: function() {
-        var indexes = this.dates.forecastIndexes();
-        var end = indexes[1];
+        var end, start;
+        [start, end] = this.dates.forecastIndexes();
         var plant = this.dates.indexOf(this.dates.plantDate());
-        var start = indexes[0];
         if (start >= plant) { return this.genDataPairs("season", start, end, plant)
         } else if (end >= plant) { return this.genDataPairs("season", plant, end, plant)
         } else { return [ ]; }
@@ -105,31 +104,25 @@ GDDTOOL = {
     logObjectHtml: function(container) { if (typeof container === 'string') { var element = document.getElementById(container); console.log(element.outerHTML); } else { console.log(contaner.outerHTML); } },
 
     observations: function() {
-        var end, indexes;
-        indexes = this.dates.observationIndexes();
-        console.log("DATA :: SEASON : indexes = " + indexes);
-        if (indexes[0] != null) {
+        var end, start
+        [start, end] = this.dates.observationIndexes();
+        if (start != null) {
             var plant = this.dates.indexOf(this.dates.plantDate());
-            end = indexes[1];
             if (plant <= end) { return this.genDataPairs("season", plant, end, plant) }
-        }
-        return [ ];
+        } else { return [ ]; }
     },
 
     periodOfRecord: function(chart_type) {
-        var indexes, indx;
-        if (chart_type == "trend") { indexes = this.dates.recentTrendIndexes();
-        } else { indexes = this.dates.seasonOutlookIndexes(); }
-        var end = indexes[1];
-        var start = indexes[0];
+        var avg, end, indx, start, value;
+        if (chart_type == "trend") { [start,end] = this.dates.recentTrendIndexes();
+        } else { [start,end] = this.dates.seasonOutlookIndexes(); }
         // turn POR data into array of [date, min, max]
-        var avg;
-        var data = [];
         var por_avg = this.data_mgr.poravg;
+        var base = por_avg[start];
         var por_max = this.data_mgr.pormax;
         var por_min = this.data_mgr.pormin;
         var days = this.dates.days;
-        var base = por_avg[start];
+        var data = [];
         for (indx=start; indx <= end; indx++) { avg = por_avg[indx] - base;
             data.push([ days[indx], avg * por_min[indx], avg * por_max[indx] ]);
         }
@@ -137,10 +130,10 @@ GDDTOOL = {
     },
 
     recentHistory: function(chart_type) {
-        var indexes;
-        if (chart_type == "trend") { indexes = this.dates.recentTrendIndexes();
-        } else { indexes = this.dates.seasonOutlookIndexes(); }
-        return this.genDataPairs("recent", indexes[0], indexes[1], indexes[0]);
+        var end, start;
+        if (chart_type == "trend") { [start,end] = this.dates.recentTrendIndexes();
+        } else { [start,end] = this.dates.seasonOutlookIndexes(); }
+        return this.genDataPairs("recent", start, end, start)
     },
 
     uploadAllData: function(loc_obj) {
