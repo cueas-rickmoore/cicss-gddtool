@@ -453,11 +453,11 @@ var MapOptions = {
     mapTypeControlOptions: null,
     mapTypeId: null,
     maxZoom: 18,
-    minZoom: 5,
+    minZoom: 6,
     scaleControl: false,
     scrollwheel: true,
     streetViewControl: false,
-    zoom: 10,
+    zoom: 7,
     zoomControl: true,
     zoomControlOptions: null,
 }

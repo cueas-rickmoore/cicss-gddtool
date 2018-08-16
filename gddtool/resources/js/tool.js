@@ -90,7 +90,7 @@ GDDTOOL = {
         var base = data[base_indx];
         var days = this.dates.days;
         var pairs = [];
-        for (indx=start; indx <= end; indx++) { pairs.push([ days[indx], data[indx] - base ]); }
+        for (indx=start; indx <= end; indx++) { if (typeof days[indx] !== 'undefined') { pairs.push([ days[indx], data[indx] - base ]); } }
         return pairs;
     },
 
@@ -130,8 +130,11 @@ GDDTOOL = {
         var por_min = this.data_mgr.pormin;
         var days = this.dates.days;
         var base = por_avg[start];
-        for (indx=start; indx <= end; indx++) { avg = por_avg[indx] - base;
-            data.push([ days[indx], avg * por_min[indx], avg * por_max[indx] ]);
+        for (indx=start; indx <= end; indx++) {
+            if (typeof days[indx] !== 'undefined') { 
+                avg = por_avg[indx] - base;
+                data.push([ days[indx], avg * por_min[indx], avg * por_max[indx] ]);
+            }
         }
         return data;
     },
