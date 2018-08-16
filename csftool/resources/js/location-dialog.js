@@ -17,10 +17,8 @@ var TheDialogContext = {
     baseLocation: function(loc_obj) {
         var loc_obj = loc_obj;
         if (typeof loc_obj === 'string') {
-            if (loc_obj == 'initial') {
-                loc_obj = this.locations[this.initial_location];
-            } else if (loc_obj == 'selected') {
-               loc_obj = this.locations[this.selected_location];
+            if (loc_obj == 'initial') { loc_obj = this.locations[this.initial_location];
+            } else if (loc_obj == 'selected') { loc_obj = this.locations[this.selected_location];
             } else { loc_obj = this.locations[loc_obj]; }
         }
         if (loc_obj) {
@@ -54,9 +52,7 @@ var TheDialogContext = {
             } else { return this.locations[loc_obj]; }
         }
         if (typeof loc_obj !== 'undefined') { return this.locations[loc_obj.id]; } 
-        if (this.selected_location != null) {
-            return this.locations[this.selected_location];
-        }
+        if (this.selected_location != null) { return this.locations[this.selected_location]; }
         return this.locations["default"];
     },
 
@@ -64,19 +60,15 @@ var TheDialogContext = {
         var dom = DialogDOM;
         jQuery(dom_element).html(dom.dialog_html); // initialze the container for all dialogs
         dom.container = dom_element;
-
         // create map dialog
         MapDialog.initializeDialog(dom.map_anchor);
         // create location editor dialog
         EditorDialog.initializeDialog(dom.editor_anchor);
-
         this.initialized = true;
         return this;
     },
 
-    locationExists: function(loc_obj) {
-        return typeof this.locations[loc_obj.id] !== 'undefined';
-    },
+    locationExists: function(loc_obj) { return typeof this.locations[loc_obj.id] !== 'undefined'; },
 
     publicContext: function() {
         return { initial_location: this.baseLocation("initial"),
@@ -85,9 +77,7 @@ var TheDialogContext = {
                }
     },
 
-    publicLocation: function(loc_obj) {
-        return this.baseLocation(this.getLocation(loc_obj));
-    },
+    publicLocation: function(loc_obj) { return this.baseLocation(this.getLocation(loc_obj)); },
 
     publicLocations: function() {
         var locations = { };
@@ -97,15 +87,9 @@ var TheDialogContext = {
         return locations;
     },
 
-    saveLocation: function(loc_obj) {
-        this.locations[loc_obj.id] = jQuery.extend({}, loc_obj);
-        this.changed = true;
-    },
+    saveLocation: function(loc_obj) { this.locations[loc_obj.id] = jQuery.extend({}, loc_obj); this.changed = true; },
 
     selectLocation: function(loc) {
-        //TODO: make sure the map gets updated
-        //      previous selected gets generic icon
-        //      new location gets selected icon
         if (typeof loc === 'string') { this.selected_location = loc;
         } else { this.selected_location = loc.id; }
         this.changed = true;
@@ -115,7 +99,6 @@ var TheDialogContext = {
 var DialogDOM = {
     center_loc_on:"#csftool-map-dialog-map",
     center_map_on:"#csftool-content",
-
     container: null,
 
     dialog_html: [ '<div id="csftool-location-dialogs">',
@@ -257,8 +240,8 @@ var EditorDialog = {
         var loc_obj = loc_obj;
         if (typeof loc_obj.id !== 'undefined') { jQuery(dom.id).val(loc_obj.id); } else { jQuery(dom.id).val(""); }
         if (typeof loc_obj.address !== 'undefined') { jQuery(dom.address).val(loc_obj.address); } else { jQuery(dom.address).val(""); }
-        if (typeof loc_obj.lat !== 'undefined') { jQuery(dom.lat).text(loc_obj.lat.toFixed(5)); } else { jQuery(dom.lat).text(""); }
-        if (typeof loc_obj.lng !== 'undefined') { jQuery(dom.lng).text(loc_obj.lng.toFixed(5)); } else { jQuery(dom.lng).text(""); }
+        if (typeof loc_obj.lat !== 'undefined') { jQuery(dom.lat).text(loc_obj.lat.toFixed(6)); } else { jQuery(dom.lat).text(""); }
+        if (typeof loc_obj.lng !== 'undefined') { jQuery(dom.lng).text(loc_obj.lng.toFixed(6)); } else { jQuery(dom.lng).text(""); }
         this.editor_location = jQuery.extend({}, loc_obj);
     },
 }
@@ -267,9 +250,7 @@ var EditorDialogOptions = {
     appendTo: DialogDOM.editor_anchor,
     autoOpen:false,
     buttons: { Cancel: { "class": "csftool-loc-dialog-cancel", text:"Cancel",
-                         click: function () {
-                             EditorDialog.close();
-                         },
+                         click: function () { EditorDialog.close(); },
                    },
                Delete: { "class": "csftool-loc-dialog-delete", text:"Delete",
                          click: function () {
@@ -307,9 +288,7 @@ var EditorDialogOptions = {
                         },
                    },
              },
-    close: function(event, ui) {
-        EditorDialog.execCallback("close");
-    },
+    close: function(event, ui) { EditorDialog.execCallback("close"); },
     draggable: true,
     minHeight: 50,
     minWidth: 450,
@@ -336,14 +315,8 @@ var MapDialog = {
     supported_events: ["close",],
     width: null,
 
-    afterClose: function() {
-        this.isopen = false;
-        this.execCloseCallback();
-    },
-
-    beforeClose: function() {
-        if (EditorDialog.isopen) { EditorDialog.close(); }
-    },
+    afterClose: function() { this.isopen = false; this.execCloseCallback(); },
+    beforeClose: function() { if (EditorDialog.isopen) { EditorDialog.close(); } },
 
     centerMap: function(location_obj) {
         var center;
@@ -369,7 +342,6 @@ var MapDialog = {
     initializeDialog: function(dom_element) {
         // create map dialog
         var dom = DialogDOM;
-
         // initialze the map container html
         jQuery(dom_element).html(dom.map_dialog_html);
         this.root_element = dom_element;
@@ -416,16 +388,9 @@ var MapDialog = {
         }
         options.center = map_loc.marker.getPosition();
         this.map = new this.google.maps.Map(document.getElementById(DialogDOM.map_element), options);
-        jQuery.each(the_context.locations,
-               function(event_type, loc_obj) { loc_obj.marker.setMap(MapDialog.map) }
-        );
-
-        this.google.maps.event.addListener(this.map, 'click', function(ev) {
-            MapLocationManager.createLocation(ev.latLng);
-        });
-        if (this.geocoder == null) {
-            this.geocoder = new this.google.maps.Geocoder();
-        }
+        jQuery.each(the_context.locations, function(event_type, loc_obj) { loc_obj.marker.setMap(MapDialog.map) });
+        this.google.maps.event.addListener(this.map, 'click', function(ev) { MapLocationManager.createLocation(ev.latLng); });
+        if (this.geocoder == null) { this.geocoder = new this.google.maps.Geocoder(); }
     },
 
     locAsLatLng: function(location_obj) {
@@ -518,25 +483,15 @@ var MarkerOptions = {
 
 var MapLocationManager = {
 
-    addLocation: function(loc_obj) {
-        TheDialogContext.locations[loc_obj.id] = jQuery.extend({}, MapLocation, loc_obj);
-    },
-
-    addLocations: function(locations) {
-        jQuery.each(locations, function(id, loc) {
-            TheDialogContext.locations[id] = jQuery.extend({}, MapLocation, loc);
-        });
-    },
-
+    addLocation: function(loc_obj) { TheDialogContext.locations[loc_obj.id] = jQuery.extend({}, MapLocation, loc_obj); },
+    addLocations: function(locations) { jQuery.each(locations, function(id, loc) { TheDialogContext.locations[id] = jQuery.extend({}, MapLocation, loc); }); },
     createDefaultLocation: function() { return this.createLocation(TheDialogContext.default_location); },
 
     createLocation: function(loc_data) {
         var place = jQuery.extend({}, MapLocation);
-
         if (loc_data instanceof MapDialog.google.maps.LatLng) {
             place.lat = loc_data.lat();
             place.lng = loc_data.lng();
-
             var callback =
                 (function(place) { var place = place; return function(result, status) {
                         if (status === MapDialog.google.maps.GeocoderStatus.OK && result.length > 0) {
@@ -553,16 +508,12 @@ var MapLocationManager = {
     saveLocation: function(loc_obj) {
         var loc_obj = loc_obj;
         var dialog = MapDialog;
-        // create an info window and add a click event listener to display it
         var content, marker, marker_ops;
-
-        // clear odl inforwindow when present
         if (typeof loc_obj.infowindow !== 'undefined') {
             infowindow = loc_obj.infowindo;
             delete infowindo;
             loc_obj.infowindo = null;
         }
-        // create a new infowindow based on input location
         content = (function(loc_obj) {
                 var template = DialogDOM.infobubble;
                 template = template.replace("${loc_obj_id}", loc_obj.id);
@@ -582,22 +533,14 @@ var MapLocationManager = {
             })(loc_obj);
         var infowindow = new dialog.google.maps.InfoWindow({ content: content});
         loc_obj.infowindow = infowindow;
-
-        // create a marker for the location
         marker_ops = jQuery.extend({}, MarkerOptions);
         marker_ops.map = dialog.map;
         marker_ops.position = dialog.locAsLatLng(loc_obj);
         marker_ops.title = loc_obj.id;
         marker = loc_obj.marker = new dialog.google.maps.Marker(marker_ops); 
-
-        // add listeners to display/hide info window
         marker.addListener('mouseover', function() { infowindow.open(MapDialog.map, marker); });
         marker.addListener('mouseout', function() { infowindow.close(); });
-        marker.addListener('click', function() {
-            EditorDialog.open(loc_obj)
-        });
-
-        // add this location to the location tracker
+        marker.addListener('click', function() { EditorDialog.open(loc_obj) });
         TheDialogContext.saveLocation(loc_obj);
         return loc_obj;
     },
@@ -607,18 +550,10 @@ var jQueryDialogProxy = function() {
     if (arguments.length == 1) {
         var arg = arguments[0];
         switch(arg) {
-
             case "close": MapDialog.close(); break;
-
-            // return all publicly available location data from map
             case "context": return TheDialogContext.publicContext(); break;
-
-            // return all locations on the map
             case "locations": return TheDialogContext.publicLocations(); break;
-
             case "open": MapDialog.open(); break;
-
-            // return the currently selected location
             case "selected": return TheDialogContext.baseLocation("selected"); break;
         }
     } else {
@@ -627,41 +562,21 @@ var jQueryDialogProxy = function() {
         switch(arg_0) {
 
             case "bind": 
-                if (arguments.length == 3) { // bind a callback to an event
-                   MapDialog.setCallback(arg_1, arguments[2]);
-                } else { // bind all in a list of [event, callback] pairs
-                    var callbacks = arg_1;
+                if (arguments.length == 3) { MapDialog.setCallback(arg_1, arguments[2]);
+                } else { var callbacks = arg_1;
                     jQuery.each(callbacks, function(event_type, callback) {
                                 MapDialog.setCallback(event_type, callback);
                                 });
                 }
                 break;
-
-            // change map dimension
-            case "height":
-            case "width":
-                MapDialog.setDimension(arg_0, arg_1);
-                break;
-
-            case "google": // init google map
-                MapDialog.initializeGoogle(arg_1);
-                break;
-
+            case "height": case "width": MapDialog.setDimension(arg_0, arg_1); break;
+            case "google": MapDialog.initializeGoogle(arg_1); break;
             case "location":
-                // when string, return the location info
-                if (typeof arg_1 === 'string') {
-                    return TheDialogContext.getLocation(arg_1);
-                // when object, set the selected location
+                if (typeof arg_1 === 'string') { return TheDialogContext.getLocation(arg_1);
                 } else { TheDialogContext.selectLocation(arg_1); }
                 break;
-
-            // add all loctions in a list to the map
             case "locations": return MapLocationManager.addLocations(arg_1); break;
-
-            // open the map dialog with a new location
             case "open": MapDialog.open(arg_1); break;
-
-            // set the title pf the map
             case "title": MapDialog.setTitle(arg_1); break;
         }
     }

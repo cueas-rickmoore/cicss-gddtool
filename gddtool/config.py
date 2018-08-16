@@ -85,6 +85,7 @@ CONFIG.dev.server_url = 'http://localhost:8082'
 CONFIG.test = ConfigObject('test', CONFIG)
 CONFIG.test.dirpaths = CONFIG.dev.dirpaths.copy("dirpaths")
 CONFIG.test.dirpaths.resources = '/Volumes/Transport/venvs/gddtool/gddtool_pkg/gddtool/resources'
+#CONFIG.test.dirpaths.resources = '/Volumes/Transport/venvs/gddtool/gddtool_pkg/gddtool/dev-resources'
 CONFIG.test.csftool_url = 'http://cyclone.nrcc.cornell.edu:8082/csftool'
 CONFIG.test.gddtool_url = 'http://cyclone.nrcc.cornell.edu:8082/gddtool'
 CONFIG.test.home = 'test-gddtool.html'
@@ -145,22 +146,26 @@ resource_map = { '/' : ('page', 'file', ('pages','gddtool.html')),
                  'js'      : ('file',  'dir', 'js'),
                  'pages'   : ('page',  'dir', 'pages'),
                  'style'   : ('file',  'dir', 'style'),
-                 'toolinit.js' : ('tool', 'dir', 'js'),
-                 'gddtool.js' : ('tool', 'dir', 'js'),
-                 'dev-gddtool.js' : ('tool', 'dir', 'js'),
-                 'test-gddtool.js' : ('tool', 'dir', 'js'),
-                 'dev-gddtool.html' : ('page',  'dir', 'pages'),
-                 'test-gddtool.html' : ('page',  'dir', 'pages'),
-                 'wpdev-gddtool.html' : ('page',  'dir', 'pages'),
+#                 'toolinit.js' : ('tool', 'dir', 'js'),
+#                 'gddtool.js' : ('tool', 'dir', 'js'),
+#                 'dev-gddtool.js' : ('tool', 'dir', 'js'),
+#                 'test-gddtool.js' : ('tool', 'dir', 'js'),
+#                 'dev-gddtool.html' : ('page',  'dir', 'pages'),
+#                 'test-gddtool.html' : ('page',  'dir', 'pages'),
+#                 'wpdev-gddtool.html' : ('page',  'dir', 'pages'),
                }
 CONFIG.resource_map = ConfigMap(resource_map)
+CONFIG.templates = ( 'tool.js', )
 del resource_map
 # resources that require template validation
-CONFIG.data_requests = ('daysInSeason', 'history', 'pordaily', 'season')
-CONFIG.templates = ( '/', '/dev-gddtool.html', '/test-gddtool.html',
-                     '/wpdev-gddtool.html',
-                     '/js/toolinit.js', '/js/dev-gddtool.js'
-                   )
+CONFIG.request_types = {
+        'file' : ( 'display.js', 'gddtool.css', 'interface.js',
+                   'load-dependencies.js', 'loadtool.js', 'loadstyles.js',
+                   'toolinit.js', 'wp-style.css' ),
+        'page' : ( 'gddtool.html', 'dev-gddtool.html', 'test-gddtool.html',
+                   'wpdev-gddtool.html', ),
+        'template' : ( 'tool.js', ),
+        }
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # miscelaneous tool configuration

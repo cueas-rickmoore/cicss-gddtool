@@ -1,29 +1,20 @@
 
 ;jQuery(document).ready( function () {
-    console.log("EVENT :: document is ready");
-    console.log("TOOLINIT :: creating display");
+    var widget = GDDTOOL.createWaitWidget();
+    if (!(widget.load_is_complete)) { widget.open(); }
 
-    options = [ { data_manager: GDDTOOL.data },
-                { date_manager: GDDTOOL.dates },
-                { default: "trend" },
-                { gdd_threshold: GDDTOOL.location.gdd_threshold },
-                { height: 450 },
-                { labels: GDDTOOL.chart_labels },
-                { location: GDDTOOL.location.location },
-                { width: 700 } ];
-    GDDTOOL.display = jQuery("#csftool-display").GddToolChart(options);
+    var options = { height: 456 , width: 690, location: GDDTOOL.location.location }
+    var display = GDDTOOL.createDisplay("#csftool-display", options);
+    display("bind", "drawing_complete", function(ev) { GDDTOOL.wait_widget.stop(); });
 
-    console.log("TOOLINIT :: creating user interface");
+    GDDTOOL.addListener("onDataRequest", function(ev) {
+        GDDTOOL.display("remove");
+        GDDTOOL.wait_widget.start(['days','normal','por','recent','season']);
+    });
 
-    GDDTOOL.ui = jQuery("#csftool-input").GddToolUserInterface( [
-          { csftool: GDDTOOL.csf_common_url },
-          { gddtool: GDDTOOL.tool_url },
-          { initial_date: GDDTOOL.location.plant_date }, 
-          { year_range: [GDDTOOL.min_year, GDDTOOL.max_year]  },
-          ] );
-    var ui = GDDTOOL.ui;
-
-    console.log("TOOLINIT :: initializing user interface callbacks");
+    options = { date_button_url: GDDTOOL.csf_common_url + "/icons/calendar-24x24.png",
+                initial_date: GDDTOOL.location.plant_date }
+    var ui = GDDTOOL.createUserInterface("#csftool-input", options);
 
     ui("bind", "chartChangeRequest", function(ev, chart_type) {
         GDDTOOL.display("chart_type", chart_type);
@@ -31,14 +22,16 @@
     });
 
     ui("bind", "gddThresholdChanged", function(ev, gdd_threshold) {
+        console.clear();
         GDDTOOL.location.gdd_threshold = gdd_threshold;
         GDDTOOL.display("gdd_threshold", gdd_threshold);
-        GDDTOOL.data.requestDataUpload();
+        GDDTOOL.display("remove");
+        GDDTOOL.wait_widget.start();
+        GDDTOOL.data_mgr.requestDataUpload();
     });
 
     ui("bind", "locationChanged", function(ev, loc_obj) {
-        if (typeof loc_obj.address === 'undefined') {
-            console.log("BAD LOCATION :: " + loc_obj.lat + " , " + loc_obj.lng);
+        if (typeof loc_obj.address === 'undefined') { console.log("BAD LOCATION :: " + loc_obj.lat + " , " + loc_obj.lng);
         } else { GDDTOOL.location.update(loc_obj); }
     });
 
@@ -49,24 +42,22 @@
         GDDTOOL.location.plant_date = plant_date;
     });
 
-    console.log("TOOLINIT :: intializing data change callbacks");
-
     GDDTOOL.addListener("load.onComplete", function(manager) {
         var display = GDDTOOL.display;
         if (display("pending")) { display("drawPending");
         } else { display("redraw"); }
     });
 
-    GDDTOOL.data.addListener("onChangeNormal", function(ev) { GDDTOOL.display("addSeries", "normal"); });
+    GDDTOOL.data_mgr.addListener("onChangeNormal", function(ev) { GDDTOOL.display("addSeries", "normal"); });
 
-    GDDTOOL.data.addListener("onChangeSeason", function(ev) {
+    GDDTOOL.data_mgr.addListener("onChangeSeason", function(ev) {
         GDDTOOL.display("addSeries", "season");
-        if (GDDTOOL.dates.fcast_end != null) { GDDTOOL.display("addSeries", "forecast"); }
+        GDDTOOL.display("addSeries", "forecast");
     });
 
-    GDDTOOL.data.addListener("onChangePOR", function(ev) { GDDTOOL.display("addSeries", "por"); });
-    GDDTOOL.data.addListener("onChangeRecent", function(ev) { GDDTOOL.display("addSeries", "recent"); });
-    GDDTOOL.data.addListener("onDataRequest", function(ev) { GDDTOOL.display("change_pending", true); });
+    GDDTOOL.data_mgr.addListener("onChangePOR", function(ev) { GDDTOOL.display("addSeries", "por"); });
+    GDDTOOL.data_mgr.addListener("onChangeRecent", function(ev) { GDDTOOL.display("addSeries", "recent"); });
+    GDDTOOL.data_mgr.addListener("onDataRequest", function(ev) { GDDTOOL.display("change_pending", true); });
 
     GDDTOOL.dates.addListener("onChangePlantDate", function(ev, prev_date, plant_date) {
         var plant_year = plant_date.getFullYear();
@@ -78,6 +69,8 @@
 
     GDDTOOL.dates.addListener("onChangeSeason", function(ev, year) {
         GDDTOOL.display("plant_date", GDDTOOL.dates.plant_date);
+        GDDTOOL.display("remove");
+        GDDTOOL.wait_widget.start();
         GDDTOOL.display("change_pending", true);
         GDDTOOL.uploadAllData();
     });
@@ -94,26 +87,25 @@
     });
 
     GDDTOOL.location.addListener("onUpdate", function(ev, loc_obj) {
+        GDDTOOL.display("remove");
         GDDTOOL.display("location", loc_obj);
-        GDDTOOL.data.requestDataUpload(loc_obj);
+        GDDTOOL.wait_widget.start();
+        GDDTOOL.uploadAllData(loc_obj);
     });
 
-
     // draw any data that is wating on the chart to be fully functional
-    GDDTOOL.data.executePendingCallbacks();
-    GDDTOOL.display("drawPending")
+    GDDTOOL.data_mgr.executePendingCallbacks();
+    if (widget.load_is_complete) { widget.stop(); }
+
+    widget.addListener("onLoadComplete", function(ev) {
+        GDDTOOL.wait_widget.stop();
+        GDDTOOL.display('redraw');
+    });
 
     // create the map dialog last because the PHP site takes it's time
     // loading the Google Maps scripts
-    console.log("TOOLINIT :: creating map dialog");
-    jQuery("#csftool-input").append(GDDTOOL.map_dialog_container);
-
-    var options = { width:600, height:500 };
-    jQuery(GDDTOOL.map_dialog_anchor).CsfToolLocationDialog(options);
-    GDDTOOL.map_dialog = jQuery(GDDTOOL.map_dialog_anchor).CsfToolLocationDialog();
-    GDDTOOL.map_dialog("google", google);
-
-    GDDTOOL.map_dialog("bind", "close", function(ev, context) { 
+    var map_dialog = GDDTOOL.createMapDialog("#csftool-input", { width:600, height:500 });
+    map_dialog("bind", "close", function(ev, context) { 
         if (context.selected_location != context.initial_location) {
             var loc_obj = context.selected_location;
             GDDTOOL.ui("location", loc_obj);

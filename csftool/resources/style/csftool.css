@@ -1,10 +1,11 @@
 @media screen {
 
     #csftool-content {
-        height: 450px;
+        height: 460px;
         width: 900px;
         margin: 0 0 0 0;
         font-family: "Lato", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        border: 2px solid #00bb00;
         }
 
     #csftool-content .csftool-center { text-align: center; }
@@ -16,22 +17,23 @@
     #csftool-input {
         display: inline-block;
         float: left;
-        height: 450px;
+        height: 460px;
         width: 198px;
         margin: 0 0 0 0;
         padding: 0 0 0 0;
         background: #ffffff;
-        border: 2px solid #00bb00;
+        border-right: 2px solid #00bb00;
         }
 
     /* display panel */
     #csftool-display {
-        height: 450px;
+        height: 460px;
         width: 696px;
         margin-left: 200px;
-        border-top: 2px solid #00bb00;
+        /* border-top: 2px solid #00bb00;
         border-right: 2px solid #00bb00;
-        border-bottom: 2px solid #00bb00;
+        border-bottom: 2px solid #00bb00; */
+        border: none;
         text-align: center;
         background: #ffffff;
         }

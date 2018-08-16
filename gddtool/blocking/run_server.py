@@ -20,21 +20,14 @@ from gddtool.blocking.files import GDDTOOL_FILE_HANDLERS
 
 from optparse import OptionParser
 parser = OptionParser()
-parser.add_option('--local', action='store_true', default=False, dest='localhost')
 parser.add_option('--log', action='store', type='string', default=None,
                   dest='log_filepath')
 parser.add_option('--page', action='store', type='string', default=None,
                   dest='tool_page')
-parser.add_option('--pkg', action='store', type='string', default=None,
-                  dest='pkg_dirpath')
 parser.add_option('--plant_day', action='store', type='string', default=None,
                   dest='plant_day')
 parser.add_option('--port', action='store', type='int', default=None,
                   dest='server_port')
-parser.add_option('--region', action='store', type='string', default=None,
-                  dest='region_key')
-parser.add_option('--source', action='store', type='string', default=None,
-                  dest='source_key')
 parser.add_option('--tool', action='store', type='string', default=None,
                   dest='toolname')
 
@@ -71,7 +64,7 @@ server_config.update(mode_config.attrs)
 server_config.dirpaths = mode_config.dirpaths.attrs
 # validate the resources and get full path to each
 server_config.resources = \
-    { 'gddtool': validateResourceConfiguration(server_config), }
+    { 'gddtool': validateResourceConfiguration(server_config, debug), }
 
 if options.demo_mode:
     server_config.dates = server_config.demo.dates.copy('dates')
@@ -90,16 +83,6 @@ if cfgfile is not None:
     overrides = eval(cfgfile.read())
     cfgfile.close()
     server_config.update(overrides)
-
-# apply overrides from command line
-if options.source_key is not None:
-    server_config.tool.data_source_key = options.source_key
-
-if options.region_key is not None:
-    server_config.tool.data_region_key = options.region_key
-
-if options.pkg_dirpath is not None:
-    server_config.dirpaths.package = os.path.abspath(options.pkg_dirpath)
 
 plant_day = options.plant_day
 if plant_day is not None:
@@ -148,23 +131,32 @@ server_config.debug = debug
 if include_csftool:
     from csftool.config import CONFIG as CSF_TOOL_CONFIG
     csftool_config = CSF_TOOL_CONFIG.copy()
+    csftool_requests = csftool_config.get('file_requests', None)
     del CSF_TOOL_CONFIG
     # validate the resources and get full path to each
     csftool_config.dirpaths.resources = \
         server_config.dirpaths.resources.replace('gddtool','csftool')
     server_config.resources.csftool = \
-        validateResourceConfiguration(csftool_config)
-    #server_config.resources = { 'gddtool' : server_config.resources.gddtool,
-    #              'csftool' : validateResourceConfiguration(csftool_config) }
+        validateResourceConfiguration(csftool_config, debug)
     del csftool_config
 
 # create a request manager
 request_manager =  GDDToolBlockingRequestManager(server_config)
-request_manager.registerResponseHandlers(toolname, **GDDTOOL_FILE_HANDLERS)
-request_manager.registerResponseHandlers(toolname, **GDDTOOL_DATA_HANDLERS)
+request_manager.registerResponseHandlerClasses(toolname,
+                                               **GDDTOOL_FILE_HANDLERS)
+request_manager.registerResponseHandlerClasses(toolname,
+                                               **GDDTOOL_DATA_HANDLERS)
+#file_requests = server_config.file_requests.attrs
+#print file_requests
+#request_manager.registerResponseHandlers(toolname, file_requests)
+
 if include_csftool:
     from csftool.blocking.files import CSFTOOL_FILE_HANDLERS
-    request_manager.registerResponseHandlers('csftool',**CSFTOOL_FILE_HANDLERS)
+    request_manager.registerResponseHandlerClasses('csftool',
+                                                   **CSFTOOL_FILE_HANDLERS)
+    #if csftool_requests is not None:
+    #    request_manager.registerHandlersForRequests('csftool',
+    #                                                csftool_requests.attrs)
 
 # create an HTTP server
 http_server = CsfToolBlockingHttpServer(server_config, request_manager)

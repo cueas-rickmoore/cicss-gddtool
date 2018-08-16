@@ -47,6 +47,7 @@ CONFIG.resource_map = ConfigMap( { 'icons'  : ('icon',  'dir',  'icons'),
                                    'images' : ('image', 'dir',  'images'),
                                    'js'     : ('file',  'dir',  'js'),
                                    'style'  : ('file',  'dir',  'style'),
+                                   'pages'  : ('page',  'dir',  'pages'),
                                } )
 
 CONFIG.server_port = 8081

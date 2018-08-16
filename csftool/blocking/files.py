@@ -20,13 +20,14 @@ class CsfToolBlockingFileHandler(CsfToolBlockingRequestHandler):
     """
 
     def __call__(self, request):
-        if self.debug:
-            print '\nFileRequestHandler', request.uri
+        if self.debug: print '\nFileRequestHandler', request.uri
         resource_path = self.getResourcePath(request.uri)
+        if self.debug: print '    requested file :', resource_path
 
         with open(resource_path, 'r') as _file_:
             request.write(self.constructResponse(_file_.read()))
 
+CSFTOOL_FILE_HANDLERS['default'] = CsfToolBlockingFileHandler
 CSFTOOL_FILE_HANDLERS['file'] = CsfToolBlockingFileHandler
 
 
@@ -66,6 +67,7 @@ class CsfToolBlockingTemplateHandler(CsfToolBlockingRequestHandler):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+CSFTOOL_FILE_HANDLERS['page'] = CsfToolBlockingTemplateHandler
 CSFTOOL_FILE_HANDLERS['tmpl'] = CsfToolBlockingTemplateHandler
 CSFTOOL_FILE_HANDLERS['template'] = CsfToolBlockingTemplateHandler
 

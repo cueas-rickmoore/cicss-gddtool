@@ -9,20 +9,17 @@
         height: 450px;
         width: 904px;
         margin: 0 0 0 0;
-        border: 2px solid #00bb00;
     }
 
     /* input panel */
     #csftool-input {
         display: inline-block;
         float: left;
-        height: 450px;
+        height: 460px;
         width: 198px;
         margin: 0 0 0 0;
         padding: 0 0 0 0;
         background: #ffffff;
-        border-right: 2px solid #00bb00;
-        /*border: 2px solid #00bb00;*/
     }
 
     #csftool-input input[type="text"],
@@ -38,7 +35,7 @@
         border-radius: 3px;
         vertical-align: middle;
         box-shadow: none;
-        border: 0;
+        border: none;
         width: 120px;
         max-width: 196px;
         font-family: "Lato", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -137,34 +134,23 @@
 
     /* display panel */
     #csftool-display {
-        height: 450px;
-        width: 700px;
-        margin-left: 200px;
-        /*border-top: 2px solid #00bb00;
-        border-right: 2px solid #00bb00;
-        border-bottom: 2px solid #00bb00;*/
-        text-align: center;
         line-height: 1em;
-        background: #ffffff;
     }
 
     #gddtool-display-chart {
-        /* height: 410px; */
-        height: 448px;
+        position: relative;
+        left: 0; top: 0; 
+        height: 460px;
         width: 700px;
         margin: 0 0 0 0;
         text-align: center;
     }
     #gddtool-display-msg {
         font-size: 0.9em;
-        /* height: 40px; */
         height: 0px;
         width: 100%;
         margin: 0 4px 0 4px;
         text-align: center;
-        /* border-top: 2px solid #3baae3; */
     }
-
 /* end of gddtool screen styling */
 }
-

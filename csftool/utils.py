@@ -5,7 +5,7 @@ from atmosci.utils.config import ConfigMap
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
-def validateResourceConfiguration(server_config):
+def validateResourceConfiguration(server_config, debug=False):
     resource_dirpath = server_config.dirpaths.resources
     resources = { }
 
@@ -22,7 +22,7 @@ def validateResourceConfiguration(server_config):
 
         if os.path.exists(path):
             resources[name] = (handler_key, resource_type, path)
-            print "    ", name, ":", resources[name]
+            if debug: print "    ", name, ":", resources[name]
         else:
             raise IOError, '%s does not exist : %s' % (resource_type, path)
 

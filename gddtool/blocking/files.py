@@ -19,14 +19,14 @@ GDDTOOL_FILE_HANDLERS = { 'file' : CsfToolBlockingFileHandler,
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-class GDDToolBlockingTemplateHandler(GDDToolBlockingRequestHandler):
+class GDDToolBlockingPageHandler(GDDToolBlockingRequestHandler):
     """ add contents of a file to the response.
     Primarily used for accessing local css and javascript files.
     """
 
     def __call__(self, request):
         if self.debug:
-            print '\nGDDToolBlockingTemplateHandler'
+            print '\nGDDToolBlockingPageHandler'
             print "    processing request for", request.uri
 
         resource_path = self.getResourcePath(request.uri)
@@ -56,24 +56,13 @@ class GDDToolBlockingTemplateHandler(GDDToolBlockingRequestHandler):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-GDDTOOL_FILE_HANDLERS['/'] = GDDToolBlockingTemplateHandler
-GDDTOOL_FILE_HANDLERS['page'] = GDDToolBlockingTemplateHandler
-GDDTOOL_FILE_HANDLERS['tmpl'] = GDDToolBlockingTemplateHandler
-GDDTOOL_FILE_HANDLERS['template'] = GDDToolBlockingTemplateHandler
-
-GDDTOOL_FILE_HANDLERS['/test-gddtool.html'] = GDDToolBlockingTemplateHandler
-GDDTOOL_FILE_HANDLERS['/wpdev-gddtool.html'] = GDDToolBlockingTemplateHandler
-GDDTOOL_FILE_HANDLERS['load-dependencies.js'] = GDDToolBlockingTemplateHandler
-GDDTOOL_FILE_HANDLERS['/load-dependencies.js'] = GDDToolBlockingTemplateHandler
-GDDTOOL_FILE_HANDLERS['test-load-dependencies.js'] = GDDToolBlockingTemplateHandler
-GDDTOOL_FILE_HANDLERS['/test-load-dependencies.js'] = GDDToolBlockingTemplateHandler
-GDDTOOL_FILE_HANDLERS['toolinit.js'] = GDDToolBlockingTemplateHandler
-GDDTOOL_FILE_HANDLERS['/toolinit.js'] = GDDToolBlockingTemplateHandler
+GDDTOOL_FILE_HANDLERS['/'] = GDDToolBlockingPageHandler
+GDDTOOL_FILE_HANDLERS['page'] = GDDToolBlockingPageHandler
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-class GDDToolBlockingInitHandler(GDDToolBlockingTemplateHandler):
+class GDDToolBlockingTemplateHandler(GDDToolBlockingPageHandler):
     """ Assemble configuration parameters for the tool initialization script.
     """
 
@@ -89,7 +78,7 @@ class GDDToolBlockingInitHandler(GDDToolBlockingTemplateHandler):
         else: year = datetime.date.today().year
         parameter_dict['season'] = year
 
-        urls = GDDToolBlockingTemplateHandler.extractTemplateParameters(self,
+        urls = GDDToolBlockingPageHandler.extractTemplateParameters(self,
                                               request_dict)
         parameter_dict.update(urls)
 
@@ -128,9 +117,6 @@ class GDDToolBlockingInitHandler(GDDToolBlockingTemplateHandler):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-GDDTOOL_FILE_HANDLERS['tool'] = GDDToolBlockingInitHandler
-GDDTOOL_FILE_HANDLERS['tool.js'] = GDDToolBlockingInitHandler
-GDDTOOL_FILE_HANDLERS['/tool.js'] = GDDToolBlockingInitHandler
-GDDTOOL_FILE_HANDLERS['test-tool.js'] = GDDToolBlockingInitHandler
-GDDTOOL_FILE_HANDLERS['/test-tool.js'] = GDDToolBlockingInitHandler
+GDDTOOL_FILE_HANDLERS['template'] = GDDToolBlockingTemplateHandler
+GDDTOOL_FILE_HANDLERS['tool'] = GDDToolBlockingTemplateHandler
 

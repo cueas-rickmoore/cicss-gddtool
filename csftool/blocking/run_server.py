@@ -35,17 +35,12 @@ parser.add_option('-w', action='store_true', default=False, dest='wpdev_mode')
 parser.add_option('-z', action='store_true', default=False, dest='debug')
 options, args = parser.parse_args()
 
-print "demo mode", options.demo_mode
-print "prod mode", options.prod_mode
-print "test mode", options.test_mode
-print "wp_dev mode", options.wpdev_mode
-
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 # import thedefault CSF server configuration
 from csftool.config import CONFIG
 server_config = CONFIG.copy()
-resources = validateResourceConfiguration(CONFIG)
+resources = validateResourceConfiguration(CONFIG, options.debug)
 del server_config['resources']
 # validate the resources and get full path to each
 server_config.resources = { "csftool" : resources, }
@@ -104,7 +99,11 @@ if len(args) > 0:
 
 # create a request manager
 request_manager =  CsfToolBlockingRequestManager(server_config)
-request_manager.registerResponseHandlers('csftool', **CSFTOOL_FILE_HANDLERS)
+request_manager.registerResponseHandlerClasses('csftool',
+                                                **CSFTOOL_FILE_HANDLERS)
+file_requests = server_config.get('file_requests', None)
+if file_requests is not None:
+    request_manager.registerResponseHandlers('csftool', file_requests.attrs)
 # create an HTTP server
 http_server = \
     CsfToolBlockingHttpServer(server_config, request_manager)

@@ -1,8 +1,6 @@
 
 ;(function(jQuery) {
 
-console.log("loading CHART plugin");
-
 var gddToolTooltipFormatter = function() {
     var tip = '<span style="font-size:12px;font-weight:bold;text-align:center">' + Highcharts.dateFormat('%b %d, %Y', this.x) + '</span>'
     jQuery.each(this.points, function() {
@@ -17,6 +15,7 @@ var gddToolTooltipFormatter = function() {
 
 var GddChartController = {
     // PROPERTIES
+    callback: null,
     chart: null,
     chart_anchor: "#gddtool-display-chart",
     chart_labels: { },
@@ -52,9 +51,7 @@ var GddChartController = {
                      marker: { enabled: true, fillColor: "#00dd00", lineWidth: 2, lineColor: "#00dd00", radius:2, symbol:"circle" } },
     },
 
-    data_manager: null,
     change_pending: true,
-    date_manager: null,
     default_chart: null,
     display_anchor: null,
     dom: '<div id="gddtool-display-chart"></div>',
@@ -63,48 +60,71 @@ var GddChartController = {
     initialized: false,
     location: null,
     pending_series: [ ],
+    series_order: ["season","forecast","recent","normal","por"],
     plant_date: null,
+    tool: null,
     year: null,
 
     // FUNCTIONS
-    highchartsIsAvailable: function() { return (typeof Highcharts != "undefined"); },
-
     addSeries: function(data_type, data) {
-        this.validChart();
-        if (this.chart) {
-                this.chart.addSeries(data, true);
+        var series = jQuery.extend(true, { data: data}, this.components[data_type]);
+        if (data.length > 0) {
+            this.validChart();
+            if (this.chart) {
+                this.chart.addSeries(series, true);
                 this.drawn.push(data_type);
-                if (this.pending_series.length  > 0) { this.drawPending(); }
-        } else { this.pending_series.push([data_type, data]); }
+                if (this.pending_series.length > 0) { this.drawPending(); }
+            } else { this.pending_series.push([data_type, series]); }
+        } else { this.drawn.push(data_type); }
+        this.complete(true);
     },
 
     addSeriesType: function(data_type) {
         var data = null;
         switch(data_type) {
-            case "forecast": data = this.genCurrentForecast(this.data_manager); break;
-            case "normal": data = this.genClimateNormal(this.data_manager); break;
-            case "season": data = this.genCurrentSeason(this.data_manager); break;
-            case "por": data = this.genPeriodOfRecord(this.data_manager); break;
-            case "recent": data = this.genRecentHistory(this.data_manager); break;
+            case "forecast": data = this.tool.forecast(); break;
+            case "normal": data = this.tool.climateNorms(this.chart_type); break;
+            case "season": data = this.tool.observations(this.chart_type); break;
+            case "por": data = this.tool.periodOfRecord(this.chart_type); break;
+            case "recent": data = this.tool.recentHistory(this.chart_type); break;
         }
         if (data !== null) { this.addSeries(data_type, data); }
     },
 
-    clear: function() {
-        while( this.chart.series.length > 0 ) { this.chart.series[0].remove(false); }
-        this.drawn = [ ];
+    allDrawn: function() { return (this.drawn.length == this.series_order.length); },
+    bind: function(event_type, callback) { this.callback = callback; },
+
+    changeGddThreshold: function(threshold) { 
+        if (threshold != this.gdd_threshold) {
+            this.gdd_threshold = threshold.toString();
+            this.change_pending = true;
+        }
     },
 
+    changeLocation: function(loc_obj) {
+        var address;
+        if (typeof loc_obj === 'string') { address = loc_obj.toString();
+        } else { address = loc_obj.address.toString(); }
+        if (address != this.location) {
+            this.location = address
+            this.change_pending = true;
+        }
+    },
+
+    clear: function() { while( this.chart.series.length > 0 ) { this.chart.series[0].remove(false); } this.drawn = [ ]; },
+    complete: function(reset) { if (this.allDrawn()) { this.execCallback(reset); } },
+
     draw: function() {
-        this.addSeries("season", this.genCurrentSeason(this.data_manager));
-        this.addSeries("forecast", this.genCurrentForecast(this.data_manager));
-        this.addSeries("recent", this.genRecentHistory(this.data_manager));
-        this.addSeries("normal", this.genClimateNormal(this.data_manager));
-        this.addSeries("por", this.genPeriodOfRecord(this.data_manager));
+        this.drawn = [ ];
+        this.addSeries("season", this.tool.observations(this.chart_type));
+        this.addSeries("forecast", this.tool.forecast());
+        this.addSeries("recent", this.tool.recentHistory(this.chart_type));
+        this.addSeries("normal", this.tool.climateNorms(this.chart_type));
+        this.addSeries("por", this.tool.periodOfRecord(this.chart_type));
     },
 
     drawChartLabel: function() {
-        var label = this.date_manager.season + " " + this.chart_labels[this.chart_type];
+        var label = this.tool.dates.season + " " + this.chart_labels[this.chart_type];
         this.chart.renderer.text(label, 325, 85).css({ color: "#000000", fontSize: "16px"}).add();
     },
 
@@ -117,83 +137,28 @@ var GddChartController = {
                 this.chart.addSeries(series[1], true);
                 if (this.drawn.indexOf(series[0]) < 0) { this.drawn.push(series[0]); }
             }
+            this.complete(true);
         }
     },
 
-    genDataPairs: function(data_type, start, end, base) {
-        var base_value = this.data_manager.dataAt(data_type, base);
-        var data = this.data_manager.sliceData(data_type, start, end);
-        var days = this.date_manager.sliceDays(start, end);
-        var result;
-        var series = [ ];
-        for (var i=0; i < data.length; i++) { 
-            result = [ days[i], data[i]-base_value ];
-            //result = [ days[i], data[i] ];
-            series.push(result);
+    execCallback: function(reset) {
+        if (typeof this.callback !== 'undefined' && this.callback != null) { 
+            this.callback("drawing_complete");
+            if (typeof reset !== 'undefined' && reset === true) { this.drawn = [ ]; }
         }
-        return series;
     },
 
-    genClimateNormal: function() {
-        var end = null;
-        if (this.chart_type == "trend") { end = this.trendEndIndex(); }
-        var start = this.date_manager.indexOf("plant_date");
-        return jQuery.extend(true, { data: this.genDataPairs("normal", start, end, start) }, this.components.normal);
-    },
-
-    genCurrentSeason: function() { // from plant date thru last obs
-        var start = this.date_manager.indexOf("plant_date");
-        var end = this.trendEndIndex("last_obs");
-        if (start < end) {
-            var data = { data: this.genDataPairs("season", start, end, start) }
-            return jQuery.extend(true, data, this.components.season);
-        } else { return null; }
-    },
-
-    genCurrentForecast: function() { // add forecast to extend season
-        var base = this.date_manager.indexOf("plant_date");
-        if (base < 0) { return null; }
-        var start = this.date_manager.indexOf("fcast_start");
-        if (start >= this.date_manager.num_days_in_season) { return null; }
-        var end = this.trendEndIndex("fcast_end");
-        if (base < end) {
-            if (base < start) { start = base; }
-            var data = { data: this.genDataPairs("season", start, end, base) }
-            return jQuery.extend(true, data, this.components.forecast);
-        } else { return null; }
-    },
-
-    genPeriodOfRecord: function() {
-        var end = null;
-        if (this.chart_type == "trend") { end = this.trendEndIndex(); }
-        var start = this.date_manager.indexOf("plant_date");
-        // turn POR data into array of [date, min, max]
-        var days = this.date_manager.sliceDays(start, end);
-        var por_avg = this.data_manager.sliceData("poravg", start, end);
-        var base = por_avg[0];
-        var por_max = this.data_manager.sliceData("pormax", start, end);
-        var por_min = this.data_manager.sliceData("pormin", start, end);
-        var data = por_avg.map(function(value, index, obj) { var avg = value - base; return [ days[index], avg * por_min[index], avg * por_max[index] ]; });
-        return jQuery.extend(true, { data:data, }, this.components.por);
-    },
-
-    genRecentHistory: function() {
-        var end = null;
-        if (this.chart_type == "trend") { end = this.trendEndIndex(); }
-        var start = this.date_manager.indexOf("plant_date");
-        return jQuery.extend(true, { data: this.genDataPairs("recent", start, end, start) }, this.components.recent);
-    },
+    highchartsIsAvailable: function() { return (typeof Highcharts != "undefined"); },
 
     init: function(dom_element) {
         this.display_anchor = dom_element.id;
-        dom_element.innerHTML = this.dom;
+        jQuery(dom_element).append(this.dom);
         Highcharts.setOptions({ global: { useUTC: false } });
         this.initialized = true;
         if (this.chart_type == null) { this.chart_type = this.default_chart; }
     },
 
     newChart: function() {
-
         if (this.chart != null) { this.chart.destroy(); this.chart = null; }
 
         var config = jQuery.extend(true, { }, this.chart_config);
@@ -211,65 +176,15 @@ var GddChartController = {
 
     redraw: function() { this.newChart(); this.draw(); },
     refresh: function() { this.clear(); this.draw(); },
-
-    setChartHeight: function(height) { this.chart_config.chart["height"] = height; },
+    remove: function() { if (this.chart != null) { this.chart.destroy(); this.chart = null; } },
     setChartType: function(chart_type) { this.chart_type = chart_type; this.change_pending = true; },
-    setChartWidth: function(width) { this.chart_config.chart["width"] = width; },
 
-    setGddThreshold: function(threshold) { 
-        if (threshold != this.gdd_threshold) {
-            this.gdd_threshold = threshold.toString();
-            this.change_pending = true;
-        }
-    },
-
-    setLabel: function(key, label) { this.chart_labels[key] = label; },
-    setLabels: function(labels) { this.chart_labels = jQuery.extend(this.chart_labels , labels); },
-
-    setLocation: function(loc_obj) {
-        var address;
-        if (typeof loc_obj === 'string') { address = loc_obj.toString();
-        } else { address = loc_obj.address.toString(); }
-        if ((this.location == null) || (address != this.location)) { 
-            this.location = address
-            this.change_pending = true;
-        }
-    },
-
-    setOption: function(key, value) {
-        switch(key) {
-            case "chart":
-            case "chart_type":
-                this.setChartType(value);
-                break;
-            case "data_manager": this.data_manager = value; break;
-            case "change_pending": this.change_pending = value; break; 
-            case "date_manager": this.date_manager = value; break;
-            case "default": this.default_chart = value; break;
-            case "gdd_threshold": this.setGddThreshold(value); break;
-            case "height": this.setChartHeight(value); break;
-            case "labels": this.setLabels(value); break;
-            case "location": this.setLocation(value); break;
-            case "plant_date": this.setPlantDate(value); break;
-            case "season": this.season = value; break;
-            case "width": this.setChartWidth(value); break;
-        }
-    },
-
-    setOptions: function(options) {
-        jQuery.each(options, function (i) {
-            var option = options[i];
-            for (var key in option) { GddChartController.setOption(key, option[key]); }
-        });
-    },
-
-    setPlantDate: function(plant_date) { this.plant_date = plant_date; },
     subtitle: function() { return "@ " + this.location; },
     title: function() { return "Cumulative Base " + this.gdd_threshold + " Growing Degree Days"; },
 
     trendEndIndex: function() {
-        end_index = this.date_manager.indexOf("fcast_end");
-        if (end_index >= 0) { return end_index } else { return this.date_manager.indexOf("last_obs"); }
+        end_index = this.tool.dates.indexOf("fcast_end");
+        if (end_index >= 0) { return end_index } else { return this.tool.dates.indexOf("last_obs"); }
     },
 
     validChart: function() {
@@ -279,20 +194,17 @@ var GddChartController = {
     },
 }
 
-var jQueryDisplayProxy = function() {
+var DisplayProxy = function() {
 
     if (arguments.length == 1) {
         switch(arguments[0]) {
-            case "change_pending": // return current state
-                return GddChartController.change_pending;
-                break;
-            case "chart": // return currently displayed chart type
-            case "chart_type":
-                return GddChartController.chart_type;
-                break;
+            case "all_series_drawn": return GddChartController.allDrawn(); break;
+            case "change_pending": return GddChartController.change_pending; break;
+            case "chart": case "chart_type": return GddChartController.chart_type; break;
             case "chart_anchor": return GddChartController.chart_anchor; break;
             case "display_anchor": return GddChartController.display_anchor; break;
             case "draw": GddChartController.draw(); break;
+            case "drawn": return GddChartController.drawn; break;
             case "drawPending": GddChartController.drawPending(); break;
             case "gdd_threshold": return GddChartController.gdd_threshold; break;
             case "location": return GddChartController.location; break;
@@ -303,14 +215,25 @@ var jQueryDisplayProxy = function() {
             case "season": return GddChartController.season; break;
         } // end of single argument switch
 
+
     } else if (arguments.length == 2) {
         var arg_0 = arguments[0];
         var arg_1 = arguments[1];
         switch(arg_0) {
             case "addSeries": GddChartController.addSeriesType(arg_1); break;
+            case "change_pending": GddChartController.change_pending = arg_1; break;
+            case "chart": case "chart_type": GddChartController.setChartType(arg_1); break;
+            case "default": GddChartController.default_chart = arg_1; break;
+            case "gdd_threshold": GddChartController.changeGddThreshold(arg_1); break;
+            case "height": GddChartController.chart_config.chart["height"] = arg_1; break;
+            case "labels": GddChartController.chart_labels = jQuery.extend({ }, arg_1); break;
+            case "location": GddChartController.changeLocation(arg_1); break;
             case "new_data": GddChartController.newDataAvailable(arg_1); break;
-            case "options": GddChartController.setOptions(arg_1); break;
-            default: GddChartController.setOption(arg_0, arg_1); break;
+            case "options": jQuery.each(arg_1, function(key, value) { DisplayProxy(key, value) }); break;
+            case "plant_date": GddChartController.plant_date = arg_1; break;
+            case "season": GddChartController.season = arg_1; break;
+            case "tool": GddChartController.tool = arg_1; break;
+            case "width": GddChartController.chart_config.chart["width"] = arg_1; break;
         } // end of 2 argument switch
 
     } else if (arguments.length == 3) {
@@ -318,8 +241,9 @@ var jQueryDisplayProxy = function() {
         var arg_1 = arguments[1];
         var arg_2 = arguments[2];
         switch(arg_0) {
-            case "label": GddChartController.setLabel(arg_1, arg_2); break;
-            case "option": GddChartController.setOption(arg_1, arg_2); break;
+            case "bind": GddChartController.bind(arg_1, arg_2); break;
+            case "label": GddChartController.chart_labels[arg_1] = arg_2; break;
+            case "option": this(arg_1, arg_2); break;
         } // end of 3 argument switch
     }
     return undefined;
@@ -327,10 +251,9 @@ var jQueryDisplayProxy = function() {
 
 jQuery.fn.GddToolChart = function(options) {
     var dom_element = this.get(0);
-    if (typeof options !== 'undefined') { GddChartController.setOptions(options); }
+    if (typeof options !== 'undefined') { DisplayProxy("options", options); }
     GddChartController.init(dom_element);
-    console.log("EVENT :: GddToolChart plugin ready");
-    return jQueryDisplayProxy;
+    return DisplayProxy;
 }
 
 })(jQuery);

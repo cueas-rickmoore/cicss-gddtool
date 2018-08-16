@@ -57,7 +57,7 @@ class CsfToolRequestHandlerMethods:
         # asking for the tool dev page
         if uri == '/': 
             if self.test_mode:
-                return self.toolname, '/', ('/',)
+                return self.toolname, 'page', ('/',)
             else: return INVALID_URI
 
         # asking for a REST api query
@@ -76,25 +76,30 @@ class CsfToolRequestHandlerMethods:
         else: uri_path = uri.split('/')
 
         # look for data or file resources
-        if len(uri_path) > 1:
+        if len(uri_path) == 3:
+            if self.debug: print 'decodeUri :', uri_path
             resource_group = uri_path[0]
-            uri_path = uri_path[1:]
-            # test for a data request
-            if uri_path[0] in self.data_requests:
-                return resource_group, 'data', tuple(uri_path)
-            # test for a templated resource
-            resource_key = uri_path[0]
-            path = '/%s' % '/'.join(uri_path)
-            if path in self.templates:
-                return resource_group, 'template', tuple(uri_path)
-        else:
-            resource_group = 'csftool'
-            if uri_path[0] in self.data_requests:
-                return resource_group, 'data', tuple(uri_path)
-            if uri_path[0] in self.templates:
-                return resource_group, 'template', tuple(uri_path)
-
-        return resource_group, 'file', tuple(uri_path)
+            resource_type = uri_path[1]
+            if resource_type == 'data': return tuple(uri_path)
+            resource_name = uri_path[2]
+            resource_path = '/'.join(uri_path[1:])
+            if resource_name in self.templates \
+            or resource_path in self.templates:
+                return resource_group, 'template', tuple(uri_path[1:])
+            if '.htm' in os.path.splitext(resource_name)[1] :
+                return resource_group, 'page', tuple(uri_path[1:])
+            return resource_group, 'file', tuple(uri_path[1:])
+        elif len(uri_path) == 2:
+            if (uri_path[0] in (self.toolname, 'csftool')):
+                resource_path = uri_path[1]
+                if '.' in resource_path:
+                    resource_type = uri_path[1].split('.')[1]
+                    if resource_type.startsith('htm'):
+                        return resource_group, 'page', tuple('pages',resource_path)
+                    return uri_path[0], 'file', (resource_type, resource_path)
+                else: return self.toolname, 'file', tuple(uri_path)
+            else: return self.toolname, 'file', tuple(uri_path)
+        return INVALID_URI
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -215,10 +220,7 @@ class CsfToolRequestHandlerMethods:
         self.resources = config.resources.copy('resources', None)
 
         # create attribute for list of template requests
-        self.templates = config.get('templates',())
-
-        # create attribute for list of data requests
-        self.data_requests = config.get('data_requests',())
+        self.templates = config.get('request_types.template',())
 
         # create dmode attribute to override dataset provided dates
         # with a consitent set of dates from the config file
